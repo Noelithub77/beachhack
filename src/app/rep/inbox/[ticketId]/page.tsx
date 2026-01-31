@@ -20,6 +20,7 @@ import {
   MicOff,
   MessageCircle,
   Mail,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -61,6 +62,19 @@ export default function RepTicketPage() {
   const [loading, setLoading] = useState<string | null>(null);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const { callStartTime, startCall, endCall } = useCallStore();
+  const [justUpdated, setJustUpdated] = useState(false);
+  const [prevSubject, setPrevSubject] = useState("");
+
+  useEffect(() => {
+    if (ticket && ticket.subject !== prevSubject) {
+      if (prevSubject !== "") {
+        setJustUpdated(true);
+        const timer = setTimeout(() => setJustUpdated(false), 3000);
+        return () => clearTimeout(timer);
+      }
+      setPrevSubject(ticket.subject);
+    }
+  }, [ticket?.subject, prevSubject]);
 
   const twilioDevice = useTwilioDevice({
     identity: user?.id ? `rep_${user.id}` : "",
@@ -231,7 +245,15 @@ export default function RepTicketPage() {
               </Button>
             </Link>
             <div className="h-4 w-px bg-gray-200 shrink-0" />
-            <h1 className="font-medium text-sm text-[#2D3E2F] truncate">
+            <h1
+              className={cn(
+                "font-medium text-sm text-[#2D3E2F] truncate transition-all duration-700",
+                justUpdated && "text-primary font-bold scale-105",
+              )}
+            >
+              {justUpdated && (
+                <Sparkles className="inline-block h-3 w-3 mr-1 text-primary animate-bounce" />
+              )}
               {ticket.subject}
             </h1>
           </div>
@@ -474,11 +496,7 @@ export default function RepTicketPage() {
       <div className="w-72 shrink-0 flex flex-col bg-white overflow-hidden">
         {/* AI Panel */}
         <div className="flex-1 min-h-0 overflow-auto border-b border-gray-200">
-          <AIContextPanel
-            ticketId={ticketId}
-            ticketSubject={ticket.subject}
-            messages={[]}
-          />
+          <AIContextPanel ticketId={ticketId} ticketSubject={ticket.subject} />
         </div>
 
         {/* Customer */}

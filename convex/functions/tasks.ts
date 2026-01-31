@@ -9,6 +9,7 @@ export const create = mutation({
         createdById: v.id("users"),
         title: v.string(),
         description: v.optional(v.string()),
+        priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent"))),
         dueAt: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
@@ -18,6 +19,7 @@ export const create = mutation({
             createdById: args.createdById,
             title: args.title,
             description: args.description,
+            priority: args.priority,
             status: "pending",
             dueAt: args.dueAt,
             createdAt: Date.now(),
