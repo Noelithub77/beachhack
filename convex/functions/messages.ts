@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 
-// send message
+// send message and sync to ticketContent
 export const send = mutation({
     args: {
         conversationId: v.id("conversations"),
@@ -10,14 +10,48 @@ export const send = mutation({
         content: v.string(),
     },
     handler: async (ctx, args) => {
+        const now = Date.now();
+
+        // insert message
         const id = await ctx.db.insert("messages", {
             conversationId: args.conversationId,
             senderId: args.senderId,
             senderType: args.senderType,
             content: args.content,
-            createdAt: Date.now(),
+            createdAt: now,
         });
-        return { success: true, messageId: id };
+
+        // get conversation to find ticketId
+        const conversation = await ctx.db.get(args.conversationId);
+        if (conversation) {
+            // determine source based on senderType
+            const source = args.senderType === "ai" ? "ai_message" as const : "chat_message" as const;
+            const role = args.senderType === "customer" ? "user" as const :
+                args.senderType === "ai" ? "assistant" as const : "system" as const;
+
+            // save to ticketContent
+            await ctx.db.insert("ticketContent", {
+                ticketId: conversation.ticketId,
+                source,
+                role,
+                content: args.content,
+                speakerId: args.senderId,
+                timestamp: now,
+            });
+
+            // count messages for this ticket
+            const contentCount = await ctx.db
+                .query("ticketContent")
+                .withIndex("by_ticket", (q) => q.eq("ticketId", conversation.ticketId))
+                .collect();
+
+            // trigger AI processing flag after every 2 messages
+            const shouldProcess = contentCount.length > 0 && contentCount.length % 2 === 0;
+
+            return { success: true, messageId: id, shouldProcess, ticketId: conversation.ticketId };
+        }
+
+        return { success: true, messageId: id, shouldProcess: false };
     },
 });
 

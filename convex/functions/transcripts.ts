@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 
-// add transcript entry
+// add transcript and sync to ticketContent
 export const add = mutation({
     args: {
         callSessionId: v.id("callSessions"),
@@ -10,14 +10,46 @@ export const add = mutation({
         text: v.string(),
     },
     handler: async (ctx, args) => {
+        const now = Date.now();
+
+        // insert transcript
         const id = await ctx.db.insert("transcripts", {
             callSessionId: args.callSessionId,
             speakerId: args.speakerId,
             speakerType: args.speakerType,
             text: args.text,
-            timestamp: Date.now(),
+            timestamp: now,
         });
-        return { success: true, transcriptId: id };
+
+        // get call session to find ticketId
+        const callSession = await ctx.db.get(args.callSessionId);
+        if (callSession) {
+            const role = args.speakerType === "customer" ? "user" as const :
+                args.speakerType === "ai" ? "assistant" as const : "system" as const;
+
+            // save to ticketContent
+            await ctx.db.insert("ticketContent", {
+                ticketId: callSession.ticketId,
+                source: "voice_transcript",
+                role,
+                content: args.text,
+                speakerId: args.speakerId,
+                timestamp: now,
+            });
+
+            // count content for this ticket
+            const contentCount = await ctx.db
+                .query("ticketContent")
+                .withIndex("by_ticket", (q) => q.eq("ticketId", callSession.ticketId))
+                .collect();
+
+            // trigger AI processing flag after every 2 entries
+            const shouldProcess = contentCount.length > 0 && contentCount.length % 2 === 0;
+
+            return { success: true, transcriptId: id, shouldProcess, ticketId: callSession.ticketId };
+        }
+
+        return { success: true, transcriptId: id, shouldProcess: false };
     },
 });
 
