@@ -56,7 +56,10 @@ Conversation:
 ${formattedConversation}
 
 Instructions:
-1. Generate a concise, descriptive title (max 60 chars) that captures the main issue
+1. Generate a descriptive, professional title (max 60 chars). 
+   - Good: "Refund Request: Double Billing on Subscription"
+   - Bad: "Customer wants money back" or "Ticket #123"
+   - Aim for: [Category]: [Specific Problem/Goal]
 2. Summarize the conversation briefly
 3. Extract confirmed facts, inferred signals, unknowns, and actions taken
 4. Determine customer sentiment

@@ -6,7 +6,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -41,6 +41,7 @@ export function ChatInterface({
   const [waitingForAI, setWaitingForAI] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const messages = useQuery(api.functions.messages.listByConversation, {
     conversationId,
@@ -130,6 +131,8 @@ export function ChatInterface({
       }
     } catch (err) {
       console.error("[AI Processing] Error:", err);
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -151,7 +154,7 @@ export function ChatInterface({
   const isLoading = sending || waitingForAI;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white relative">
       {/* messages list */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 ? (
@@ -211,6 +214,16 @@ export function ChatInterface({
         {isWaitingForResponse && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* AI Analysis Status */}
+      {isAnalyzing && (
+        <div className="px-4 py-1.5 bg-primary/5 border-t border-primary/10 animate-in slide-in-from-bottom-2 flex items-center gap-2">
+          <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+          <span className="text-[10px] font-medium text-primary/70 uppercase tracking-wider">
+            SAGE is refining ticket context...
+          </span>
+        </div>
+      )}
 
       {/* input */}
       <div className="border-t p-4">

@@ -1,33 +1,24 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle,
   HelpCircle,
   Lightbulb,
-  RefreshCw,
   Sparkles,
-  AlertTriangle,
   ArrowRight,
+  Clock,
 } from "lucide-react";
-import { useState, useCallback } from "react";
-
-interface ContextData {
-  summary: string;
-  confirmedFacts: string[];
-  inferredSignals: string[];
-  unknowns: string[];
-  actionsTaken: string[];
-  sentiment: "positive" | "neutral" | "frustrated" | "urgent";
-  suggestedNextSteps: string[];
-}
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface AIContextPanelProps {
-  ticketId: string;
+  ticketId: Id<"tickets">;
   ticketSubject: string;
-  messages: { role: string; content: string }[];
 }
 
 const sentimentColors = {
@@ -41,138 +32,117 @@ const sentimentColors = {
 export function AIContextPanel({
   ticketId,
   ticketSubject,
-  messages,
 }: AIContextPanelProps) {
-  const [context, setContext] = useState<ContextData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const context = useQuery(api.functions.context.getByTicket, { ticketId });
+  const [justUpdated, setJustUpdated] = useState(false);
+  const [prevVersion, setPrevVersion] = useState(0);
 
-  const fetchContext = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/ai/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages, ticketSubject }),
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch context");
-
-      const data = await res.json();
-      setContext(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (context && context.version > prevVersion) {
+      if (prevVersion !== 0) {
+        setJustUpdated(true);
+        const timer = setTimeout(() => setJustUpdated(false), 3000);
+        return () => clearTimeout(timer);
+      }
+      setPrevVersion(context.version);
     }
-  }, [messages, ticketSubject]);
+  }, [context?.version, prevVersion]);
 
-  if (!context && !isLoading && !error) {
+  if (context === undefined) {
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Sparkles className="h-4 w-4 text-primary" />
-            AI Context
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button
-            onClick={fetchContext}
-            variant="outline"
-            size="sm"
-            className="w-full"
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            Generate Context Summary
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="p-4 space-y-3">
+        <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+        <div className="h-20 bg-muted rounded animate-pulse" />
+      </div>
     );
   }
 
-  if (isLoading) {
+  if (!context) {
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-            Analyzing...
+      <Card className="border-none shadow-none bg-transparent">
+        <CardHeader className="pb-3 px-0">
+          <CardTitle className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <Sparkles className="h-3.5 w-3.5" />
+            AI Context
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="h-4 bg-muted rounded animate-pulse" />
-            <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
-            <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+        <CardContent className="px-0">
+          <div className="rounded-lg border border-dashed p-4 text-center">
+            <Sparkles className="h-5 w-5 mx-auto mb-2 text-muted-foreground/30" />
+            <p className="text-xs text-muted-foreground">
+              Waiting for enough conversation context to generate insights...
+            </p>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm text-destructive">
-            <AlertTriangle className="h-4 w-4" />
-            Error
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-3">{error}</p>
-          <Button onClick={fetchContext} variant="outline" size="sm">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="border-none shadow-none bg-transparent">
+      <CardHeader className="pb-3 px-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Sparkles className="h-4 w-4 text-primary" />
+          <CardTitle className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <Sparkles
+              className={cn(
+                "h-3.5 w-3.5 text-primary",
+                justUpdated && "animate-bounce",
+              )}
+            />
             AI Context
+            {justUpdated && (
+              <Badge
+                variant="outline"
+                className="ml-2 h-4 px-1.5 text-[8px] bg-primary/5 text-primary border-primary/20 animate-in fade-in zoom-in duration-300"
+              >
+                JUST UPDATED
+              </Badge>
+            )}
           </CardTitle>
-          <Button
-            onClick={fetchContext}
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-          >
-            <RefreshCw className="h-3 w-3" />
-          </Button>
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+            <Clock className="h-3 w-3" />v{context.version}
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="px-0 space-y-5">
         {/* summary */}
-        <div>
-          <p className="text-sm text-muted-foreground">{context?.summary}</p>
-          {context?.sentiment && (
-            <Badge className={`mt-2 ${sentimentColors[context.sentiment]}`}>
-              {context.sentiment}
+        <div
+          className={cn(
+            "transition-all duration-700 p-2 rounded-lg",
+            justUpdated && "bg-primary/5 shadow-inner",
+          )}
+        >
+          <p className="text-xs leading-relaxed text-foreground/90">
+            {context.summary}
+          </p>
+          {context.sentiment && (
+            <Badge
+              className={cn(
+                "mt-3 text-[10px] font-medium border-none",
+                sentimentColors[
+                  context.sentiment as keyof typeof sentimentColors
+                ],
+              )}
+            >
+              {context.sentiment.toUpperCase()}
             </Badge>
           )}
         </div>
 
         {/* confirmed facts */}
-        {context?.confirmedFacts && context.confirmedFacts.length > 0 && (
+        {context.confirmedFacts.length > 0 && (
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-              <CheckCircle className="h-3 w-3" />
+            <h4 className="text-[10px] font-bold text-muted-foreground mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
+              <CheckCircle className="h-3 w-3 text-green-500" />
               Confirmed Facts
             </h4>
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {context.confirmedFacts.map((fact, i) => (
-                <li key={i} className="text-xs flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
+                <li
+                  key={i}
+                  className="text-[11px] flex items-start gap-2 text-foreground/80"
+                >
+                  <span className="w-1 h-1 rounded-full bg-green-500/50 mt-1.5 shrink-0" />
                   {fact}
                 </li>
               ))}
@@ -181,16 +151,19 @@ export function AIContextPanel({
         )}
 
         {/* inferred signals */}
-        {context?.inferredSignals && context.inferredSignals.length > 0 && (
+        {context.inferredSignals.length > 0 && (
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-              <Lightbulb className="h-3 w-3" />
-              Inferred Signals
+            <h4 className="text-[10px] font-bold text-muted-foreground mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
+              <Lightbulb className="h-3 w-3 text-yellow-500" />
+              AI Signals
             </h4>
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {context.inferredSignals.map((signal, i) => (
-                <li key={i} className="text-xs flex items-start gap-2">
-                  <span className="text-yellow-500 mt-0.5">•</span>
+                <li
+                  key={i}
+                  className="text-[11px] flex items-start gap-2 text-foreground/80 italic"
+                >
+                  <span className="w-1 h-1 rounded-full bg-yellow-500/50 mt-1.5 shrink-0" />
                   {signal}
                 </li>
               ))}
@@ -199,41 +172,27 @@ export function AIContextPanel({
         )}
 
         {/* unknowns */}
-        {context?.unknowns && context.unknowns.length > 0 && (
+        {context.unknowns.length > 0 && (
           <div>
-            <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-              <HelpCircle className="h-3 w-3" />
-              Needs Clarification
+            <h4 className="text-[10px] font-bold text-muted-foreground mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
+              <HelpCircle className="h-3 w-3 text-blue-500" />
+              Information Needed
             </h4>
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {context.unknowns.map((unknown, i) => (
-                <li key={i} className="text-xs flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">?</span>
+                <li
+                  key={i}
+                  className="text-[11px] flex items-start gap-2 text-foreground/80"
+                >
+                  <span className="text-blue-500 mt-[-1px] shrink-0 font-bold">
+                    ?
+                  </span>
                   {unknown}
                 </li>
               ))}
             </ul>
           </div>
         )}
-
-        {/* suggested next steps */}
-        {context?.suggestedNextSteps &&
-          context.suggestedNextSteps.length > 0 && (
-            <div>
-              <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                <ArrowRight className="h-3 w-3" />
-                Suggested Next Steps
-              </h4>
-              <ul className="space-y-1">
-                {context.suggestedNextSteps.map((step, i) => (
-                  <li key={i} className="text-xs flex items-start gap-2">
-                    <span className="text-primary mt-0.5">{i + 1}.</span>
-                    {step}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
       </CardContent>
     </Card>
   );

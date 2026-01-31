@@ -56,6 +56,7 @@ export function AIChatInterface({
 }: AIChatInterfaceProps) {
   const { user } = useAuthStore();
   const [input, setInput] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const saveMessage = useMutation(api.functions.messages.send);
 
   // load existing messages from convex
@@ -155,6 +156,7 @@ export function AIChatInterface({
 
   // process ticket with AI (fire and forget)
   const triggerAiProcessing = async (tid: Id<"tickets">) => {
+    setIsAnalyzing(true);
     try {
       const content = await fetch(
         `/api/convex/ticket-content?ticketId=${tid}`,
@@ -181,13 +183,15 @@ export function AIChatInterface({
       }
     } catch (err) {
       console.error("[AI Processing] Error:", err);
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
   const isLoading = status === "submitted" || status === "streaming";
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white relative">
       <Conversation className="flex-1">
         <ConversationContent>
           {allMessages.length === 0 ? (
@@ -261,6 +265,16 @@ export function AIChatInterface({
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
+
+      {/* AI Analysis Status */}
+      {isAnalyzing && (
+        <div className="px-4 py-1.5 bg-primary/5 border-t border-primary/10 animate-in slide-in-from-bottom-2 flex items-center gap-2">
+          <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+          <span className="text-[10px] font-medium text-primary/70 uppercase tracking-wider">
+            SAGE is refining ticket context...
+          </span>
+        </div>
+      )}
 
       <div className="border-t p-4">
         <PromptInput
