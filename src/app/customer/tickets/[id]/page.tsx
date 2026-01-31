@@ -1,0 +1,157 @@
+"use client";
+
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../../convex/_generated/api";
+import { Id } from "../../../../../convex/_generated/dataModel";
+import { useParams, useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Loader2, MessageCircle, Clock, User } from "lucide-react";
+import Link from "next/link";
+import {
+  TicketStatusBadge,
+  TicketStatus,
+} from "@/components/tickets/ticket-status-badge";
+import { ChatInterface } from "@/components/chat/chat-interface";
+import { formatDistanceToNow } from "date-fns";
+import { useEffect, useState } from "react";
+import { useAuthStore } from "@/stores/auth-store";
+
+export default function TicketDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const ticketId = params.id as Id<"tickets">;
+  const { user } = useAuthStore();
+
+  const ticket = useQuery(api.functions.tickets.getWithDetails, { ticketId });
+  const conversation = useQuery(api.functions.conversations.getByTicket, {
+    ticketId,
+  });
+  const createConversation = useMutation(api.functions.conversations.create);
+
+  const [creatingConversation, setCreatingConversation] = useState(false);
+
+  useEffect(() => {
+    if (conversation === null && ticket && !creatingConversation) {
+      setCreatingConversation(true);
+      createConversation({ ticketId, channel: ticket.channel }).finally(() => {
+        setCreatingConversation(false);
+      });
+    }
+  }, [
+    conversation,
+    ticket,
+    ticketId,
+    createConversation,
+    creatingConversation,
+  ]);
+
+  if (ticket === undefined || conversation === undefined) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (ticket === null) {
+    return (
+      <div className="space-y-4">
+        <Link href="/customer/tickets">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Tickets
+          </Button>
+        </Link>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">Ticket not found</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const priorityColor: Record<string, string> = {
+    low: "bg-muted text-muted-foreground",
+    medium: "bg-sand/20 text-earth",
+    high: "bg-orange-100 text-orange-700",
+    urgent: "bg-destructive/10 text-destructive",
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* back button */}
+      <Link href="/customer/tickets">
+        <Button variant="ghost" size="sm" className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Tickets
+        </Button>
+      </Link>
+
+      {/* ticket header */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <CardTitle className="text-xl">{ticket.subject}</CardTitle>
+              <p className="text-sm text-muted-foreground font-mono">
+                {ticket._id.slice(-8).toUpperCase()}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <TicketStatusBadge status={ticket.status as TicketStatus} />
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${priorityColor[ticket.priority]}`}
+              >
+                {ticket.priority}
+              </span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4" />
+              Created{" "}
+              {formatDistanceToNow(new Date(ticket.createdAt), {
+                addSuffix: true,
+              })}
+            </div>
+            {ticket.rep && (
+              <div className="flex items-center gap-1.5">
+                <User className="h-4 w-4" />
+                Assigned to {ticket.rep.name}
+              </div>
+            )}
+            {ticket.vendor && (
+              <div className="flex items-center gap-1.5">
+                <MessageCircle className="h-4 w-4" />
+                {ticket.vendor.name}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* chat section */}
+      <Card className="flex-1">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Conversation</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 h-[400px]">
+          {conversation ? (
+            <ChatInterface
+              conversationId={conversation._id}
+              ticketId={ticketId}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

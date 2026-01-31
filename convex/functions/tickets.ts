@@ -151,3 +151,51 @@ export const reassign = mutation({
         return { success: true };
     },
 });
+
+// list active tickets for customer (non-closed)
+export const listActive = query({
+    args: { customerId: v.id("users") },
+    handler: async (ctx, args) => {
+        const tickets = await ctx.db
+            .query("tickets")
+            .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
+            .order("desc")
+            .collect();
+        return tickets.filter((t) => t.status !== "closed");
+    },
+});
+
+// list unassigned tickets for rep queue
+export const listUnassigned = query({
+    args: { vendorId: v.optional(v.id("vendors")) },
+    handler: async (ctx, args) => {
+        let tickets;
+        if (args.vendorId) {
+            const vid = args.vendorId;
+            tickets = await ctx.db
+                .query("tickets")
+                .withIndex("by_vendor", (qb) => qb.eq("vendorId", vid))
+                .order("desc")
+                .collect();
+        } else {
+            tickets = await ctx.db.query("tickets").order("desc").collect();
+        }
+        return tickets.filter((t) => !t.assignedRepId && t.status !== "closed");
+    },
+});
+
+// get ticket with customer and vendor details
+export const getWithDetails = query({
+    args: { ticketId: v.id("tickets") },
+    handler: async (ctx, args) => {
+        const ticket = await ctx.db.get(args.ticketId);
+        if (!ticket) return null;
+
+        const customer = await ctx.db.get(ticket.customerId);
+        const vendor = await ctx.db.get(ticket.vendorId);
+        const rep = ticket.assignedRepId ? await ctx.db.get(ticket.assignedRepId) : null;
+
+        return { ...ticket, customer, vendor, rep };
+    },
+});
+

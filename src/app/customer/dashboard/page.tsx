@@ -1,16 +1,37 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Phone, Mail, FileText, Plus } from "lucide-react";
+import {
+  MessageCircle,
+  Phone,
+  Mail,
+  FileText,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { useAuthStore } from "@/stores/auth-store";
+import { TicketCard } from "@/components/tickets/ticket-card";
+import { Id } from "../../../../convex/_generated/dataModel";
+import { TicketStatus } from "@/components/tickets/ticket-status-badge";
 
 export default function CustomerDashboard() {
+  const { user } = useAuthStore();
+  const tickets = useQuery(
+    api.functions.tickets.listActive,
+    user?.id ? { customerId: user.id as Id<"users"> } : "skip",
+  );
+
   return (
     <div className="space-y-6">
       {/* header */}
       <div>
-        <h1 className="text-2xl font-semibold">Welcome back</h1>
+        <h1 className="text-2xl font-semibold">
+          Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
+        </h1>
         <p className="text-muted-foreground">How can we help you today?</p>
       </div>
 
@@ -71,14 +92,44 @@ export default function CustomerDashboard() {
             </Button>
           </Link>
         </div>
-        <Card>
-          <CardContent className="flex flex-col items-center py-8 text-center">
-            <p className="text-muted-foreground">No active tickets</p>
-            <p className="text-sm text-muted-foreground">
-              Start a conversation to get help
-            </p>
-          </CardContent>
-        </Card>
+
+        {tickets === undefined ? (
+          <Card>
+            <CardContent className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </CardContent>
+          </Card>
+        ) : tickets.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center py-8 text-center">
+              <p className="text-muted-foreground">No active tickets</p>
+              <p className="text-sm text-muted-foreground">
+                Start a conversation to get help
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {tickets.slice(0, 3).map((ticket) => (
+              <TicketCard
+                key={ticket._id}
+                id={ticket._id}
+                subject={ticket.subject}
+                status={ticket.status as TicketStatus}
+                priority={ticket.priority}
+                updatedAt={ticket.updatedAt}
+                href={`/customer/tickets/${ticket._id}`}
+              />
+            ))}
+            {tickets.length > 3 && (
+              <Link href="/customer/tickets" className="block">
+                <Button variant="ghost" className="w-full">
+                  View all {tickets.length} tickets
+                </Button>
+              </Link>
+            )}
+          </div>
+        )}
       </section>
 
       {/* vendor selector hint */}
