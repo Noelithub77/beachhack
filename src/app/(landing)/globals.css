@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: "Geist", "Inter", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "SF Mono", monospace;
+
+  --color-sage-50: #F0F4F1;
+  --color-sage-100: #DCE8DD;
+  --color-sage-200: #B8D1BA;
+  --color-sage-300: #8FB898;
+  --color-sage-400: #6B9F72;
+  --color-sage-500: #4D8A56;
+  --color-sage-600: #3D7045;
+  --color-sage-700: #2E5836;
+  --color-sage-800: #1F3E26;
+  --color-sage-900: #142A1A;
+
+  --color-earth-50: #F7F4F0;
+  --color-earth-100: #EDE8DF;
+  --color-earth-200: #D9CFC0;
+  --color-earth-300: #C2B49E;
+  --color-earth-400: #A8997C;
+  --color-earth-500: #8E7F5E;
+  --color-earth-600: #756837;
+  --color-earth-700: #5C5030;
+  --color-earth-800: #3F3520;
+  --color-earth-900: #2A2415;
+
+  --color-neutral-50: #FAFAFA;
+  --color-neutral-100: #F5F5F3;
+  --color-neutral-200: #ECECEA;
+  --color-neutral-300: #D9D9D5;
+  --color-neutral-400: #B8B8B2;
+  --color-neutral-500: #8A8A82;
+  --color-neutral-600: #6B6B63;
+  --color-neutral-700: #4A4A44;
+  --color-neutral-800: #2E2E2A;
+  --color-neutral-900: #1A1A18;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  --shadow-xs: 0 1px 2px rgba(26, 26, 24, 0.06);
+  --shadow-sm: 0 2px 6px rgba(26, 26, 24, 0.08);
+  --shadow-md: 0 4px 14px rgba(26, 26, 24, 0.10);
+  --shadow-lg: 0 8px 28px rgba(26, 26, 24, 0.12);
+  --shadow-xl: 0 16px 48px rgba(26, 26, 24, 0.14);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #fafafa;
+  color: #1a1a18;
+}
+
+.text-gradient {
+  background: linear-gradient(to right, rgb(61, 112, 69), rgb(142, 127, 94));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgb(236, 236, 234);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f3;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b8b8b2;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8a8a82;
+}
+
+.ambient-sage {
+  background-image: radial-gradient(
+    ellipse 80% 60% at 20% 30%,
+    rgba(77, 138, 86, 0.07) 0%,
+    transparent 70%
+  );
+}
+
+.ambient-earth {
+  background-image: radial-gradient(
+    ellipse 60% 50% at 75% 70%,
+    rgba(142, 127, 94, 0.06) 0%,
+    transparent 70%
+  );
+}
+
+.ambient-dual {
+  background-image:
+    radial-gradient(
+      ellipse 80% 60% at 15% 25%,
+      rgba(77, 138, 86, 0.06) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 50% 45% at 80% 75%,
+      rgba(142, 127, 94, 0.05) 0%,
+      transparent 60%
+    );
+}

@@ -1,0 +1,11 @@
+export { BoxesContainer } from "./BoxesContainer";
+export { Button } from "./Button";
+export { Navbar } from "./Navbar";
+export { Hero } from "./Hero";
+export { Features } from "./Features";
+export { HowItWorks } from "./HowItWorks";
+export { ForTeams } from "./ForTeams";
+export { Philosophy } from "./Philosophy";
+export { Footer } from "./Footer";
+export { Section } from "./Section";
+export { Logo } from "./Logo";
