@@ -33,8 +33,8 @@ export const metadata: Metadata = {
     description: "Unified customer support platform with zero context loss",
   },
   icons: {
-    icon: "/favicon.ico",
-    apple: "/favicon.ico",
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 };
 
