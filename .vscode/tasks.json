@@ -1,0 +1,71 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev:frontend",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["dev"],
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "ready|started|listening",
+          "endsPattern": "error|failed"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "group": "dev"
+      }
+    },
+    {
+      "label": "dev:backend",
+      "type": "shell",
+      "command": "npx",
+      "args": ["convex", "dev"],
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "ready|started|listening",
+          "endsPattern": "error|failed"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "group": "dev"
+      }
+    },
+    {
+      "label": "dev:all",
+      "dependsOn": ["dev:frontend", "dev:backend"],
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "open-browser",
+      "type": "shell",
+      "command": "start",
+      "args": ["http://localhost:3000"],
+      "presentation": {
+        "reveal": "never"
+      }
+    },
+    {
+      "label": "build",
+      "dependsOn": ["dev:all", "open-browser"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
