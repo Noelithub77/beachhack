@@ -564,17 +564,17 @@ export default function RepTicketPage() {
       </div>
 
       {/* Right Column - Sidebar */}
-      <div className="w-72 shrink-0 flex flex-col bg-white overflow-hidden">
+      <div className="w-96 shrink-0 flex flex-col bg-white overflow-hidden">
         {/* AI Panel */}
-        <div className="flex-1 min-h-0 overflow-auto border-b border-gray-200">
+        <div className="flex-1 min-h-0 overflow-auto border-b border-gray-200 p-4">
           <AIContextPanel ticketId={ticketId} ticketSubject={ticket.subject} />
         </div>
 
         {/* Customer */}
-        <div className="shrink-0 p-3 border-b border-gray-200">
+        <div className="shrink-0 p-4 border-b border-gray-200">
           <div className="flex items-center gap-1.5 mb-2">
             <User className="h-3 w-3 text-gray-400" />
-            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Customer
             </span>
           </div>
@@ -585,16 +585,16 @@ export default function RepTicketPage() {
                   <User className="h-3.5 w-3.5 text-[#6f8551]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-[#2D3E2F] truncate">
+                  <p className="text-sm font-medium text-[#2D3E2F] truncate">
                     {ticket.customer.name}
                   </p>
-                  <p className="text-[10px] text-muted-foreground truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {ticket.customer.email}
                   </p>
                 </div>
               </div>
               {ticket.customer.phoneNumber && (
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Phone className="h-3 w-3" />
                   <span>{ticket.customer.phoneNumber}</span>
                 </div>
@@ -627,7 +627,7 @@ export default function RepTicketPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full h-6 text-[10px]"
+                    className="w-full h-6 text-xs"
                   >
                     View active call
                   </Button>
@@ -642,7 +642,7 @@ export default function RepTicketPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full h-6 text-[10px] text-muted-foreground"
+                      className="w-full h-6 text-xs text-muted-foreground"
                     >
                       View last call
                     </Button>
@@ -650,17 +650,17 @@ export default function RepTicketPage() {
                 )}
             </div>
           ) : (
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               No customer info
             </p>
           )}
         </div>
 
         {/* Details */}
-        <div className="shrink-0 p-3">
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
+        <div className="shrink-0 p-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
             <div>
-              <span className="text-gray-400 uppercase tracking-wide">
+              <span className="text-gray-500 uppercase tracking-wide">
                 Priority
               </span>
               <p className="font-medium text-[#2D3E2F] capitalize">
@@ -668,7 +668,7 @@ export default function RepTicketPage() {
               </p>
             </div>
             <div>
-              <span className="text-gray-400 uppercase tracking-wide">
+              <span className="text-gray-500 uppercase tracking-wide">
                 Channel
               </span>
               <p className="font-medium text-[#2D3E2F] capitalize">
@@ -676,7 +676,7 @@ export default function RepTicketPage() {
               </p>
             </div>
             <div>
-              <span className="text-gray-400 uppercase tracking-wide">
+              <span className="text-gray-500 uppercase tracking-wide">
                 Created
               </span>
               <p className="font-medium text-[#2D3E2F]">
@@ -685,7 +685,7 @@ export default function RepTicketPage() {
             </div>
             {ticket.rep && (
               <div>
-                <span className="text-gray-400 uppercase tracking-wide">
+                <span className="text-gray-500 uppercase tracking-wide">
                   Assigned
                 </span>
                 <p className="font-medium text-[#2D3E2F] truncate">

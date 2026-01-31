@@ -50,7 +50,7 @@ export function AIContextPanel({
 
   if (context === undefined) {
     return (
-      <div className="p-4 space-y-3">
+      <div className="space-y-3">
         <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
         <div className="h-20 bg-muted rounded animate-pulse" />
       </div>
@@ -61,7 +61,7 @@ export function AIContextPanel({
     return (
       <Card className="border-none shadow-none bg-transparent">
         <CardHeader className="pb-3 px-0">
-          <CardTitle className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             <Sparkles className="h-3.5 w-3.5" />
             AI Context
           </CardTitle>
@@ -69,7 +69,7 @@ export function AIContextPanel({
         <CardContent className="px-0">
           <div className="rounded-lg border border-dashed p-4 text-center">
             <Sparkles className="h-5 w-5 mx-auto mb-2 text-muted-foreground/30" />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Waiting for enough conversation context to generate insights...
             </p>
           </div>
@@ -82,7 +82,7 @@ export function AIContextPanel({
     <Card className="border-none shadow-none bg-transparent">
       <CardHeader className="pb-3 px-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             <Sparkles
               className={cn(
                 "h-3.5 w-3.5 text-primary",
@@ -99,7 +99,7 @@ export function AIContextPanel({
               </Badge>
             )}
           </CardTitle>
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
             <Clock className="h-3 w-3" />v{context.version}
           </div>
         </div>
@@ -108,11 +108,11 @@ export function AIContextPanel({
         {/* summary */}
         <div
           className={cn(
-            "transition-all duration-700 p-2 rounded-lg",
+            "transition-all duration-700 p-4 rounded-lg",
             justUpdated && "bg-primary/5 shadow-inner",
           )}
         >
-          <p className="text-xs leading-relaxed text-foreground/90">
+          <p className="text-sm leading-relaxed text-foreground/90">
             {context.summary}
           </p>
           {context.sentiment && (
@@ -132,15 +132,15 @@ export function AIContextPanel({
         {/* confirmed facts */}
         {context.confirmedFacts.length > 0 && (
           <div>
-            <h4 className="text-[10px] font-bold text-muted-foreground mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5 uppercase tracking-wider">
               <CheckCircle className="h-3 w-3 text-green-500" />
               Confirmed Facts
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {context.confirmedFacts.map((fact, i) => (
                 <li
                   key={i}
-                  className="text-[11px] flex items-start gap-2 text-foreground/80"
+                  className="text-sm flex items-start gap-2 text-foreground/80"
                 >
                   <span className="w-1 h-1 rounded-full bg-green-500/50 mt-1.5 shrink-0" />
                   {fact}
@@ -153,15 +153,15 @@ export function AIContextPanel({
         {/* inferred signals */}
         {context.inferredSignals.length > 0 && (
           <div>
-            <h4 className="text-[10px] font-bold text-muted-foreground mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5 uppercase tracking-wider">
               <Lightbulb className="h-3 w-3 text-yellow-500" />
               AI Signals
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {context.inferredSignals.map((signal, i) => (
                 <li
                   key={i}
-                  className="text-[11px] flex items-start gap-2 text-foreground/80 italic"
+                  className="text-sm flex items-start gap-2 text-foreground/80 italic"
                 >
                   <span className="w-1 h-1 rounded-full bg-yellow-500/50 mt-1.5 shrink-0" />
                   {signal}
@@ -174,15 +174,15 @@ export function AIContextPanel({
         {/* unknowns */}
         {context.unknowns.length > 0 && (
           <div>
-            <h4 className="text-[10px] font-bold text-muted-foreground mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5 uppercase tracking-wider">
               <HelpCircle className="h-3 w-3 text-blue-500" />
               Information Needed
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {context.unknowns.map((unknown, i) => (
                 <li
                   key={i}
-                  className="text-[11px] flex items-start gap-2 text-foreground/80"
+                  className="text-sm flex items-start gap-2 text-foreground/80"
                 >
                   <span className="text-blue-500 mt-[-1px] shrink-0 font-bold">
                     ?
