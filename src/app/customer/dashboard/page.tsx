@@ -6,7 +6,7 @@ import {
   Sparkles,
   UserRound,
   ArrowRight,
-  Bot,
+  WandSparkles,
   Headphones,
   Loader2,
   ChevronRight,
@@ -54,7 +54,7 @@ export default function CustomerDashboard() {
                 </div>
                 <h2 className="text-2xl font-semibold mb-2">Quick Help</h2>
                 <div className="flex items-center gap-1.5 text-primary font-medium mb-3">
-                  <Bot className="h-4 w-4" />
+                  <WandSparkles className="h-4 w-4" />
                   <span>AI-Powered</span>
                 </div>
                 <p className="text-muted-foreground text-sm mb-5">

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { User, Bot, MessageCircle } from "lucide-react";
+import { User, WandSparkles, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface Transcript {
@@ -33,7 +33,7 @@ export function TranscriptionPanel({
   const getSpeakerIcon = (speaker: Transcript["speaker"]) => {
     switch (speaker) {
       case "ai":
-        return <Bot className="h-4 w-4 text-primary" />;
+        return <WandSparkles className="h-4 w-4 text-primary" />;
       default:
         return <User className="h-4 w-4 text-muted-foreground" />;
     }
