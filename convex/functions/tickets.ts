@@ -24,6 +24,7 @@ export const create = mutation({
       v.literal("call"),
       v.literal("email"),
       v.literal("docs"),
+      v.literal("ai_chat"),
     ),
     priority: v.union(
       v.literal("low"),
@@ -446,5 +447,51 @@ export const updateDetails = mutation({
 
     await ctx.db.patch(args.ticketId, updates);
     return { success: true };
+  },
+});
+
+// update ticket title (AI-generated)
+export const updateTitle = mutation({
+  args: {
+    ticketId: v.id("tickets"),
+    subject: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.ticketId, {
+      subject: args.subject,
+      updatedAt: Date.now(),
+    });
+    return { success: true };
+  },
+});
+
+// create AI chat ticket
+export const createAiChat = mutation({
+  args: {
+    customerId: v.id("users"),
+    vendorId: v.id("vendors"),
+    subject: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const ticketId = await ctx.db.insert("tickets", {
+      customerId: args.customerId,
+      vendorId: args.vendorId,
+      status: "in_progress",
+      channel: "ai_chat",
+      priority: "medium",
+      subject: args.subject || "AI Support Chat",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // create conversation for this AI chat
+    const conversationId = await ctx.db.insert("conversations", {
+      ticketId,
+      channel: "ai_chat",
+      createdAt: now,
+    });
+
+    return { success: true, ticketId, conversationId };
   },
 });

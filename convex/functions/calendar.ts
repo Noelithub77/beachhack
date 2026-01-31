@@ -79,3 +79,40 @@ export const listByVendor = query({
             .collect();
     },
 });
+
+// create event from AI extraction
+export const createFromAi = mutation({
+    args: {
+        vendorId: v.id("vendors"),
+        userId: v.id("users"),
+        sourceTicketId: v.id("tickets"),
+        title: v.string(),
+        type: v.union(v.literal("meeting"), v.literal("other")),
+        startAt: v.number(),
+        endAt: v.number(),
+    },
+    handler: async (ctx, args) => {
+        const id = await ctx.db.insert("calendarEvents", {
+            vendorId: args.vendorId,
+            userId: args.userId,
+            title: args.title,
+            type: args.type,
+            startAt: args.startAt,
+            endAt: args.endAt,
+            sourceTicketId: args.sourceTicketId,
+            aiGenerated: true,
+        });
+        return { success: true, eventId: id };
+    },
+});
+
+// list events by source ticket
+export const listByTicket = query({
+    args: { ticketId: v.id("tickets") },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("calendarEvents")
+            .withIndex("by_ticket", (q) => q.eq("sourceTicketId", args.ticketId))
+            .collect();
+    },
+});

@@ -70,3 +70,41 @@ export const listByVendor = query({
             .collect();
     },
 });
+
+// create task from AI extraction
+export const createFromAi = mutation({
+    args: {
+        vendorId: v.id("vendors"),
+        assigneeId: v.id("users"),
+        sourceTicketId: v.id("tickets"),
+        title: v.string(),
+        description: v.optional(v.string()),
+        dueAt: v.optional(v.number()),
+    },
+    handler: async (ctx, args) => {
+        const id = await ctx.db.insert("tasks", {
+            vendorId: args.vendorId,
+            assigneeId: args.assigneeId,
+            createdById: args.assigneeId,
+            title: args.title,
+            description: args.description,
+            status: "pending",
+            dueAt: args.dueAt,
+            createdAt: Date.now(),
+            sourceTicketId: args.sourceTicketId,
+            aiGenerated: true,
+        });
+        return { success: true, taskId: id };
+    },
+});
+
+// list tasks by source ticket
+export const listByTicket = query({
+    args: { ticketId: v.id("tickets") },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("tasks")
+            .withIndex("by_ticket", (q) => q.eq("sourceTicketId", args.ticketId))
+            .collect();
+    },
+});

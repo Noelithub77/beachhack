@@ -5,7 +5,13 @@ import { mutation, query } from "../_generated/server";
 export const create = mutation({
     args: {
         ticketId: v.id("tickets"),
-        channel: v.union(v.literal("chat"), v.literal("call"), v.literal("email"), v.literal("docs")),
+        channel: v.union(
+            v.literal("chat"),
+            v.literal("call"),
+            v.literal("email"),
+            v.literal("docs"),
+            v.literal("ai_chat"),
+        ),
     },
     handler: async (ctx, args) => {
         const id = await ctx.db.insert("conversations", {
