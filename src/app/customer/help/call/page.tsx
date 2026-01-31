@@ -11,6 +11,7 @@ import {
   TranscriptionPanel,
   type Transcript,
 } from "@/components/call/transcription-panel";
+import { CustomerFeedback } from "@/components/feedback/customer-feedback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -31,7 +32,7 @@ import { api } from "@/../convex/_generated/api";
 import { Id } from "@/../convex/_generated/dataModel";
 import Link from "next/link";
 
-type CallMode = "idle" | "connecting" | "active" | "rep_call";
+type CallMode = "idle" | "connecting" | "active" | "rep_call" | "feedback";
 type CallbackStatus = "idle" | "requesting" | "requested";
 
 export default function CallPage() {
@@ -62,6 +63,14 @@ export default function CallPage() {
   const endCallSession = useMutation(api.functions.calls.end);
   const createTicket = useMutation(api.functions.tickets.create);
 
+  // reset local state
+  const resetCallState = useCallback(() => {
+    setMode("idle");
+    setTranscripts([]);
+    setCurrentTicketId(null);
+    setCurrentCallSessionId(null);
+  }, []);
+
   // ElevenLabs conversation hook
   const conversation = useElevenLabsConversation({
     onMessage: (message) => {
@@ -78,7 +87,19 @@ export default function CallPage() {
     onStatusChange: (status) => {
       if (status === "connected") {
         setMode("active");
-      } else if (status === "disconnected") {
+      } else if (status === "disconnected" && mode === "active") {
+        // Only go to feedback if we were previously active (handled in hangup usually, 
+        // but if remote disconnects, this might trigger. 
+        // For now let's keep it simple: if remote disconnects, we might want feedback too?
+        // But handleHangUp is the main driver. 
+        // If status disconnects without us hanging up, we might be stuck?
+        // The original code set mode to "idle".
+        // Let's defer to handleHangUp for authorized disconnects, 
+        // but for unexpected disconnects we might fall back to idle.
+        // Let's leave this logic as is for now, or check if we need to change it.
+        // Original: if (status === "disconnected") { setMode("idle"); }
+        // If we want feedback on remote disconnect, we change it here.
+        // Let's stick to manual hangup triggering feedback to avoid confusion on connection drops.
         setMode("idle");
       }
     },
@@ -154,10 +175,8 @@ export default function CallPage() {
       });
     }
 
-    setMode("idle");
-    setTranscripts([]);
-    setCurrentTicketId(null);
-    setCurrentCallSessionId(null);
+    setMode("feedback");
+    // State clearing deferred to after feedback
   }, [
     conversation,
     endCall,
@@ -168,6 +187,12 @@ export default function CallPage() {
     currentTicketId,
     vendor,
   ]);
+
+  const handleFeedbackSubmit = (data: any) => {
+    console.log("Feedback submitted:", data);
+    // TODO: Send to backend
+    resetCallState();
+  };
 
   // vendor not selected
   if (!vendorId) {
@@ -427,6 +452,18 @@ export default function CallPage() {
 
         {/* live transcription panel - always visible during call */}
         {mode === "active" && <TranscriptionPanel transcripts={transcripts} />}
+
+        {/* feedback state */}
+        {mode === "feedback" && (
+          <div className="flex justify-center pt-8">
+            <CustomerFeedback
+              type="call"
+              vendorName={vendor.name}
+              onSubmit={handleFeedbackSubmit}
+              onSkip={resetCallState}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

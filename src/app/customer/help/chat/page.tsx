@@ -2,8 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { CustomerFeedback } from "@/components/feedback/customer-feedback";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useAuthStore } from "@/stores/auth-store";
@@ -11,8 +13,10 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 export default function CustomerChat() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const [input, setInput] = useState("");
+  const [isEnded, setIsEnded] = useState(false);
 
   const transport = useMemo(
     () =>
@@ -63,7 +67,7 @@ export default function CustomerChat() {
         }));
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
+    <div className="relative flex h-[calc(100vh-8rem)] flex-col">
       {/* header */}
       <div className="flex items-center gap-3 border-b pb-4">
         <Link href="/customer/help">
@@ -71,7 +75,7 @@ export default function CustomerChat() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
           <div className="rounded-full bg-primary/10 p-2">
             <Sparkles className="h-4 w-4 text-primary" />
           </div>
@@ -82,6 +86,15 @@ export default function CustomerChat() {
             </p>
           </div>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+          onClick={() => setIsEnded(true)}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          <span className="hidden sm:inline">End Chat</span>
+        </Button>
       </div>
 
       {/* messages */}
@@ -130,6 +143,22 @@ export default function CustomerChat() {
           </Button>
         </div>
       </form>
+
+      {/* Feedback Overlay */}
+      {isEnded && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
+          <CustomerFeedback
+            type="chat"
+            vendorName="SAGE"
+            onSubmit={(data) => {
+              console.log("Chat feedback:", data);
+              // TODO: persist feedback
+              router.push("/customer/help");
+            }}
+            onSkip={() => router.push("/customer/help")}
+          />
+        </div>
+      )}
     </div>
   );
 }
