@@ -25,12 +25,6 @@ export const seed = mutation({
             createdAt: now,
         });
 
-        const vendorAcme = await ctx.db.insert("vendors", {
-            name: "Acme Corp",
-            primaryColor: "#3B82F6",
-            isActive: true,
-            createdAt: now,
-        });
 
         // seed users - password is just "password" for demo
         const users = [
