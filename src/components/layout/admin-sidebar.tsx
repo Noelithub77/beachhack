@@ -1,80 +1,133 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   BarChart3,
   Users,
   Calendar,
-  CheckSquare,
+  ListTodo,
   Building2,
   Settings,
   LogOut,
+  PanelLeft,
 } from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/auth-store";
 
 const navItems = [
-  { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/admin/analytics", icon: BarChart3, label: "Analytics" },
-  { href: "/admin/employees", icon: Users, label: "Employees" },
-  { href: "/admin/calendar", icon: Calendar, label: "Calendar" },
-  { href: "/admin/tasks", icon: CheckSquare, label: "Tasks" },
-  { href: "/admin/vendors", icon: Building2, label: "Vendors" },
-  { href: "/admin/settings", icon: Settings, label: "Settings" },
+  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { label: "Employees", href: "/admin/employees", icon: Users },
+  { label: "Calendar", href: "/admin/calendar", icon: Calendar },
+  { label: "Tasks", href: "/admin/tasks", icon: ListTodo },
+  { label: "Vendors", href: "/admin/vendors", icon: Building2 },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
+  const { toggleSidebar, state } = useSidebar();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
+  const roleLabel =
+    user?.role === "admin_manager"
+      ? "Manager"
+      : user?.role === "admin_senior"
+        ? "Senior Admin"
+        : "Super Admin";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r bg-card">
-      {/* logo */}
-      <div className="flex h-16 items-center border-b px-6">
-        <Link
-          href="/admin/dashboard"
-          className="text-xl font-semibold tracking-tight"
-        >
-          COCO
-        </Link>
-        <span className="ml-2 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-          Admin
-        </span>
-      </div>
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/admin/dashboard">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <span className="text-sm font-bold">C</span>
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">COCO</span>
+                  <span className="truncate text-xs">{roleLabel}</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-      {/* nav */}
-      <nav className="flex-1 space-y-1 p-4">
-        {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
+      <SidebarContent>
+        <SidebarMenu>
+          {navItems.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            return (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  tooltip={item.label}
+                  className={cn(
+                    isActive
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={toggleSidebar}
+              tooltip={state === "expanded" ? "Collapse" : "Expand"}
             >
-              <item.icon className="h-5 w-5" strokeWidth={1.5} />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* footer */}
-      <div className="border-t p-4">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground"
-        >
-          <LogOut className="h-5 w-5" strokeWidth={1.5} />
-          Sign Out
-        </Button>
-      </div>
-    </aside>
+              <PanelLeft
+                className={state === "collapsed" ? "rotate-180" : ""}
+              />
+              <span>Collapse</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={handleLogout}
+              className="text-red-500 hover:text-red-600 hover:bg-red-100/10"
+              tooltip="Logout"
+            >
+              <LogOut />
+              <span>Logout</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   );
 }

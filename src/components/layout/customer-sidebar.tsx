@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Inbox,
-  Calendar,
-  ListTodo,
-  BarChart3,
-  Users,
+  LayoutDashboard,
+  Ticket,
+  Building2,
+  HelpCircle,
+  User,
   LogOut,
+  MessageCircle,
   PanelLeft,
 } from "lucide-react";
 import {
@@ -26,17 +27,18 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 
 const navItems = [
-  { label: "Inbox", href: "/rep/inbox", icon: Inbox },
-  { label: "Calendar", href: "/rep/calendar", icon: Calendar },
-  { label: "Tasks", href: "/rep/tasks", icon: ListTodo },
-  { label: "Analytics", href: "/rep/analytics", icon: BarChart3 },
-  { label: "Team", href: "/rep/team", icon: Users },
+  { label: "Dashboard", href: "/customer/dashboard", icon: LayoutDashboard },
+  { label: "Tickets", href: "/customer/tickets", icon: Ticket },
+  { label: "Vendors", href: "/customer/vendors", icon: Building2 },
+  { label: "Chat", href: "/customer/chat", icon: MessageCircle },
+  { label: "Help", href: "/customer/help", icon: HelpCircle },
+  { label: "Profile", href: "/customer/profile", icon: User },
 ];
 
-export function RepSidebar(props: React.ComponentProps<typeof Sidebar>) {
+export function CustomerSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const logout = useAuthStore((s) => s.logout);
   const { toggleSidebar, state } = useSidebar();
 
   const handleLogout = () => {
@@ -44,26 +46,19 @@ export function RepSidebar(props: React.ComponentProps<typeof Sidebar>) {
     router.push("/login");
   };
 
-  const roleLabel =
-    user?.role === "rep_l1"
-      ? "L1 Support"
-      : user?.role === "rep_l2"
-        ? "L2 Support"
-        : "L3 Support";
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/rep/inbox">
+              <Link href="/customer/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <span className="text-sm font-bold">C</span>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">COCO</span>
-                  <span className="truncate text-xs">{roleLabel}</span>
+                  <span className="truncate text-xs">Customer Portal</span>
                 </div>
               </Link>
             </SidebarMenuButton>
