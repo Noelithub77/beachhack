@@ -177,11 +177,12 @@ export const getWithStats = query({
 
     // Check if favorited
     let isFavorite = false;
-    if (args.userId) {
+    const userId = args.userId;
+    if (userId) {
       const fav = await ctx.db
         .query("userFavorites")
         .withIndex("by_user_vendor", (q) =>
-          q.eq("userId", args.userId).eq("vendorId", args.vendorId),
+          q.eq("userId", userId).eq("vendorId", args.vendorId),
         )
         .first();
       isFavorite = !!fav;

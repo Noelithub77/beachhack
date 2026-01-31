@@ -151,7 +151,9 @@ export default function TicketDetailPage() {
               {ticket.description && (
                 <div>
                   <p className="text-sm font-medium mb-1">Description</p>
-                  <p className="text-sm text-muted-foreground">{ticket.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {ticket.description}
+                  </p>
                 </div>
               )}
               <div className="flex flex-wrap gap-2">
@@ -168,8 +170,8 @@ export default function TicketDetailPage() {
                       ticket.severity === "critical"
                         ? "border-red-500 text-red-500"
                         : ticket.severity === "major"
-                        ? "border-orange-500 text-orange-500"
-                        : ""
+                          ? "border-orange-500 text-orange-500"
+                          : ""
                     }`}
                   >
                     <AlertCircle className="h-3 w-3" />
@@ -183,8 +185,8 @@ export default function TicketDetailPage() {
                       ticket.urgency === "immediate"
                         ? "border-red-500 text-red-500"
                         : ticket.urgency === "high"
-                        ? "border-orange-500 text-orange-500"
-                        : ""
+                          ? "border-orange-500 text-orange-500"
+                          : ""
                     }`}
                   >
                     <Zap className="h-3 w-3" />
@@ -193,9 +195,15 @@ export default function TicketDetailPage() {
                 )}
                 {ticket.preferredContact && (
                   <Badge variant="secondary" className="gap-1">
-                    {ticket.preferredContact === "call" && <Phone className="h-3 w-3" />}
-                    {ticket.preferredContact === "email" && <Mail className="h-3 w-3" />}
-                    {ticket.preferredContact === "chat" && <MessageCircle className="h-3 w-3" />}
+                    {ticket.preferredContact === "call" && (
+                      <Phone className="h-3 w-3" />
+                    )}
+                    {ticket.preferredContact === "email" && (
+                      <Mail className="h-3 w-3" />
+                    )}
+                    {ticket.preferredContact === "chat" && (
+                      <MessageCircle className="h-3 w-3" />
+                    )}
                     Prefers {ticket.preferredContact}
                   </Badge>
                 )}

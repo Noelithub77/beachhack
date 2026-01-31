@@ -121,7 +121,14 @@ export const createFromIntake = mutation({
     await ctx.db.insert("queues", {
       vendorId: args.vendorId,
       ticketId,
-      priority: priority === "urgent" ? 4 : priority === "high" ? 3 : priority === "medium" ? 2 : 1,
+      priority:
+        priority === "urgent"
+          ? 4
+          : priority === "high"
+            ? 3
+            : priority === "medium"
+              ? 2
+              : 1,
       enteredAt: now,
     });
 

@@ -84,7 +84,11 @@ const urgencyLevels = [
   { value: "low", label: "Low", description: "When you get a chance" },
   { value: "medium", label: "Medium", description: "Within a few days" },
   { value: "high", label: "High", description: "Today if possible" },
-  { value: "immediate", label: "Immediate", description: "Need help right now" },
+  {
+    value: "immediate",
+    label: "Immediate",
+    description: "Need help right now",
+  },
 ];
 
 const contactMethods = [
@@ -119,7 +123,7 @@ export default function IntakePage() {
 
   const vendor = useQuery(
     api.functions.vendors.getById,
-    vendorId ? { id: vendorId as Id<"vendors"> } : "skip"
+    vendorId ? { id: vendorId as Id<"vendors"> } : "skip",
   );
 
   const createTicket = useMutation(api.functions.tickets.createFromIntake);
@@ -145,7 +149,11 @@ export default function IntakePage() {
   const canProceed = () => {
     switch (step) {
       case 1:
-        return formData.subject.trim() && formData.description.trim() && formData.category;
+        return (
+          formData.subject.trim() &&
+          formData.description.trim() &&
+          formData.category
+        );
       case 2:
         return formData.severity && formData.urgency;
       case 3:
@@ -227,7 +235,9 @@ export default function IntakePage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/customer/vendors/${vendorId}?mode=human`)}
+            onClick={() =>
+              router.push(`/customer/vendors/${vendorId}?mode=human`)
+            }
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -250,7 +260,7 @@ export default function IntakePage() {
                     "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
                     step >= s
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   {s}
@@ -259,7 +269,7 @@ export default function IntakePage() {
                   <div
                     className={cn(
                       "w-12 h-0.5 mx-1",
-                      step > s ? "bg-primary" : "bg-muted"
+                      step > s ? "bg-primary" : "bg-muted",
                     )}
                   />
                 )}
@@ -347,7 +357,7 @@ export default function IntakePage() {
                       "flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
                       formData.severity === level.value
                         ? "border-primary bg-primary/5"
-                        : "hover:bg-muted/50"
+                        : "hover:bg-muted/50",
                     )}
                   >
                     <RadioGroupItem
@@ -381,7 +391,7 @@ export default function IntakePage() {
                       "flex flex-col p-4 rounded-lg border cursor-pointer transition-colors",
                       formData.urgency === level.value
                         ? "border-primary bg-primary/5"
-                        : "hover:bg-muted/50"
+                        : "hover:bg-muted/50",
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -425,7 +435,7 @@ export default function IntakePage() {
                     "flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors",
                     formData.preferredContact === method.value
                       ? "border-primary bg-primary/5"
-                      : "hover:bg-muted/50"
+                      : "hover:bg-muted/50",
                   )}
                 >
                   <RadioGroupItem
@@ -459,11 +469,17 @@ export default function IntakePage() {
                 </p>
                 <p>
                   <span className="text-muted-foreground">Severity:</span>{" "}
-                  {severityLevels.find((s) => s.value === formData.severity)?.label}
+                  {
+                    severityLevels.find((s) => s.value === formData.severity)
+                      ?.label
+                  }
                 </p>
                 <p>
                   <span className="text-muted-foreground">Urgency:</span>{" "}
-                  {urgencyLevels.find((u) => u.value === formData.urgency)?.label}
+                  {
+                    urgencyLevels.find((u) => u.value === formData.urgency)
+                      ?.label
+                  }
                 </p>
               </div>
             </div>
@@ -481,7 +497,9 @@ export default function IntakePage() {
             <h2 className="text-2xl font-bold mb-2">Request Submitted!</h2>
             <p className="text-muted-foreground mb-6">
               Your support ticket has been created. Our team will reach out via{" "}
-              {contactMethods.find((m) => m.value === formData.preferredContact)?.label?.toLowerCase()}{" "}
+              {contactMethods
+                .find((m) => m.value === formData.preferredContact)
+                ?.label?.toLowerCase()}{" "}
               shortly.
             </p>
 
@@ -510,11 +528,7 @@ export default function IntakePage() {
       {/* Navigation Buttons */}
       {step !== 4 && (
         <div className="flex justify-between">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            disabled={step === 1}
-          >
+          <Button variant="ghost" onClick={handleBack} disabled={step === 1}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>

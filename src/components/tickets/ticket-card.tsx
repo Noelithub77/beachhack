@@ -92,7 +92,7 @@ export function TicketCard({
                 <p className="text-sm text-muted-foreground truncate">
                   {aiSummary}
                 </p>
-              ) : (customerName || vendorName) ? (
+              ) : customerName || vendorName ? (
                 <p className="text-sm text-muted-foreground truncate">
                   {customerName && `${customerName}`}
                   {customerName && vendorName && " • "}
