@@ -7,28 +7,13 @@ import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Loader2 } from "lucide-react";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
 interface ChatInterfaceProps {
   conversationId: Id<"conversations">;
   ticketId: Id<"tickets">;
-}
-
-// Animated typing dots indicator component
-function TypingIndicator() {
-  return (
-    <div className="flex justify-start">
-      <div className="bg-primary/10 text-foreground border border-primary/20 rounded-2xl px-4 py-3">
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:0ms]" />
-          <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:150ms]" />
-          <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:300ms]" />
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export function ChatInterface({
@@ -38,50 +23,21 @@ export function ChatInterface({
   const { user } = useAuthStore();
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [waitingForAI, setWaitingForAI] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const prevMessageCountRef = useRef<number>(0);
 
   const messages = useQuery(api.functions.messages.listByConversation, {
     conversationId,
   });
   const sendMessage = useMutation(api.functions.messages.send);
 
-  // Check if the last message is from the user (waiting for AI response)
-  const isWaitingForResponse = useMemo(() => {
-    if (!messages || messages.length === 0) return false;
-    const lastMessage = messages[messages.length - 1];
-    // Show typing indicator if the last message is from user/customer and we're waiting
-    return (
-      waitingForAI &&
-      (lastMessage.senderType === "customer" || lastMessage.senderType === "rep")
-    );
-  }, [messages, waitingForAI]);
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isWaitingForResponse]);
-
-  // Detect when AI responds to stop the waiting indicator
-  useEffect(() => {
-    if (messages && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      // If a new AI message arrived, stop waiting
-      if (
-        messages.length > prevMessageCountRef.current &&
-        (lastMessage.senderType === "ai" || lastMessage.senderType === "system")
-      ) {
-        setWaitingForAI(false);
-      }
-      prevMessageCountRef.current = messages.length;
-    }
   }, [messages]);
 
   const handleSend = async () => {
     if (!message.trim() || !user) return;
 
     setSending(true);
-    setWaitingForAI(true);
     try {
       const senderType = user.role === "customer" ? "customer" : "rep";
       await sendMessage({
@@ -91,8 +47,6 @@ export function ChatInterface({
         content: message.trim(),
       });
       setMessage("");
-    } catch (error) {
-      setWaitingForAI(false);
     } finally {
       setSending(false);
     }
@@ -112,8 +66,6 @@ export function ChatInterface({
       </div>
     );
   }
-
-  const isLoading = sending || waitingForAI;
 
   return (
     <div className="flex flex-col h-full">
@@ -146,11 +98,11 @@ export function ChatInterface({
                     "max-w-[80%] rounded-2xl px-4 py-2",
                     isSystem && "bg-muted text-muted-foreground text-sm italic",
                     isAi &&
-                    "bg-primary/10 text-foreground border border-primary/20",
+                      "bg-primary/10 text-foreground border border-primary/20",
                     !isSystem &&
-                    !isAi &&
-                    isOwn &&
-                    "bg-primary text-primary-foreground",
+                      !isAi &&
+                      isOwn &&
+                      "bg-primary text-primary-foreground",
                     !isSystem && !isAi && !isOwn && "bg-muted text-foreground",
                   )}
                 >
@@ -172,8 +124,6 @@ export function ChatInterface({
             );
           })
         )}
-        {/* AI Typing Indicator */}
-        {isWaitingForResponse && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
 
@@ -187,9 +137,9 @@ export function ChatInterface({
             placeholder="Type a message..."
             disabled={sending}
           />
-          <Button onClick={handleSend} disabled={isLoading || !message.trim()}>
-            {isLoading ? (
-              <Send className="h-4 w-4 animate-spin" />
+          <Button onClick={handleSend} disabled={sending || !message.trim()}>
+            {sending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />
             )}
