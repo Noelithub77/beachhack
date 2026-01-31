@@ -4,7 +4,6 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -19,6 +18,8 @@ import {
   PhoneOff,
   Mic,
   MicOff,
+  MessageCircle,
+  Mail,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -32,13 +33,13 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useTwilioDevice } from "@/hooks/use-twilio-device";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
-import { RepSuggestionPanel } from "@/components/call/rep-suggestion-panel";
 import {
   TranscriptionPanel,
   type Transcript,
 } from "@/components/call/transcription-panel";
 import { CallTimer } from "@/components/call/call-timer";
 import { useCallStore } from "@/stores/call-store";
+import { cn } from "@/lib/utils";
 
 export default function RepTicketPage() {
   const params = useParams();
@@ -60,7 +61,6 @@ export default function RepTicketPage() {
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const { callStartTime, startCall, endCall } = useCallStore();
 
-  // Twilio device for call tickets
   const twilioDevice = useTwilioDevice({
     identity: user?.id ? `rep_${user.id}` : "",
     onIncomingCall: () => {},
@@ -86,13 +86,11 @@ export default function RepTicketPage() {
     },
   });
 
-  // register Twilio when viewing call ticket
   useEffect(() => {
     if (ticket?.channel === "call" && user?.id) {
       twilioDevice.register();
     }
     return () => twilioDevice.unregister();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticket?.channel, user?.id]);
 
   useEffect(() => {
@@ -102,13 +100,7 @@ export default function RepTicketPage() {
         setCreatingConversation(false);
       });
     }
-  }, [
-    conversation,
-    ticket,
-    ticketId,
-    createConversation,
-    creatingConversation,
-  ]);
+  }, [conversation, ticket, ticketId, createConversation, creatingConversation]);
 
   const handleAccept = async () => {
     if (!user?.id) return;
@@ -159,26 +151,22 @@ export default function RepTicketPage() {
 
   if (ticket === undefined || conversation === undefined) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="h-full flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-[#6f8551]" />
       </div>
     );
   }
 
   if (ticket === null) {
     return (
-      <div className="space-y-4">
+      <div className="h-full flex flex-col items-center justify-center gap-4 bg-white">
+        <p className="text-muted-foreground">Ticket not found</p>
         <Link href="/rep/inbox">
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Inbox
           </Button>
         </Link>
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Ticket not found</p>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -186,288 +174,213 @@ export default function RepTicketPage() {
   const isAssignedToMe = ticket.assignedRepId === user?.id;
   const isUnassigned = !ticket.assignedRepId;
 
+  const priorityConfig: Record<string, { bg: string; text: string; dot: string }> = {
+    low: { bg: "bg-slate-100", text: "text-slate-600", dot: "bg-slate-400" },
+    medium: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
+    high: { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-500" },
+    urgent: { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" },
+  };
+
   return (
-    <div className="space-y-4">
-      {/* back button */}
-      <Link href="/rep/inbox">
-        <Button variant="ghost" size="sm" className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Inbox
-        </Button>
-      </Link>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* main content */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* ticket header */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <CardTitle className="text-xl">{ticket.subject}</CardTitle>
-                  <p className="text-sm text-muted-foreground font-mono">
-                    {ticket._id.slice(-8).toUpperCase()}
-                  </p>
-                </div>
-                <TicketStatusBadge status={ticket.status as TicketStatus} />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-4">
-              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  {formatDistanceToNow(new Date(ticket.createdAt), {
-                    addSuffix: true,
-                  })}
-                </div>
-                {ticket.vendor && (
-                  <div className="flex items-center gap-1.5">
-                    <Building className="h-4 w-4" />
-                    {ticket.vendor.name}
-                  </div>
-                )}
-              </div>
-
-              {/* actions */}
-              <div className="flex flex-wrap gap-2 pt-2 border-t">
-                {isUnassigned && (
-                  <Button onClick={handleAccept} disabled={loading !== null}>
-                    {loading === "accept" ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    Accept Ticket
-                  </Button>
-                )}
-                {isAssignedToMe && ticket.status === "assigned" && (
-                  <Button
-                    onClick={handleStartProgress}
-                    disabled={loading !== null}
-                  >
-                    {loading === "progress" ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    Start Working
-                  </Button>
-                )}
-                {isAssignedToMe && ticket.status === "in_progress" && (
-                  <Button
-                    onClick={handleResolve}
-                    disabled={loading !== null}
-                    variant="default"
-                  >
-                    {loading === "resolve" ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                    )}
-                    Resolve
-                  </Button>
-                )}
-                {isAssignedToMe &&
-                  ticket.status !== "closed" &&
-                  ticket.status !== "resolved" && (
-                    <Button
-                      onClick={handleEscalate}
-                      disabled={loading !== null}
-                      variant="outline"
-                    >
-                      {loading === "escalate" ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <ArrowUpRight className="h-4 w-4 mr-2" />
-                      )}
-                      Escalate
-                    </Button>
-                  )}
-                {ticket.status === "resolved" && (
-                  <Button
-                    onClick={handleClose}
-                    disabled={loading !== null}
-                    variant="outline"
-                  >
-                    {loading === "close" ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <XCircle className="h-4 w-4 mr-2" />
-                    )}
-                    Close Ticket
-                  </Button>
-                )}
-              </div>
-
-              {/* Call UI for call-channel tickets */}
-              {ticket.channel === "call" && isAssignedToMe && (
-                <div className="pt-4 border-t">
-                  {!twilioDevice.activeCall ? (
-                    <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                      <div className="rounded-full bg-purple-100 dark:bg-purple-900 p-2">
-                        <Phone className="h-4 w-4 text-purple-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Call the customer</p>
-                        <p className="text-xs text-muted-foreground">
-                          {twilioDevice.state === "ready"
-                            ? "Ready to call"
-                            : "Connecting..."}
-                        </p>
-                      </div>
-                      <Button
-                        className="bg-purple-600 hover:bg-purple-700"
-                        size="sm"
-                        disabled={twilioDevice.state !== "ready"}
-                        onClick={async () => {
-                          const customerId = ticket.customerId;
-                          await twilioDevice.makeCall(`customer_${customerId}`);
-                          startCall(`call_${ticketId}`, "Customer");
-                          speech.start();
-                          setTranscripts([]);
-                        }}
-                      >
-                        <Phone className="h-4 w-4 mr-1" /> Call
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="rounded-full bg-green-500 p-2 animate-pulse">
-                            <Phone className="h-4 w-4 text-white" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                              Call in progress
-                            </p>
-                            <CallTimer startTime={callStartTime} />
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() =>
-                              twilioDevice.mute(!twilioDevice.isMuted)
-                            }
-                          >
-                            {twilioDevice.isMuted ? (
-                              <MicOff className="h-4 w-4 text-red-500" />
-                            ) : (
-                              <Mic className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              twilioDevice.hangUp();
-                              endCall();
-                              speech.stop();
-                            }}
-                          >
-                            <PhoneOff className="h-4 w-4 mr-1" /> End
-                          </Button>
-                        </div>
-                      </div>
-                      <TranscriptionPanel
-                        transcripts={transcripts}
-                        className="h-32"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* chat */}
-          <Card className="flex-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Conversation</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 h-[400px]">
-              {conversation ? (
-                <ChatInterface
-                  conversationId={conversation._id}
-                  ticketId={ticketId}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+    <div className="h-full flex">
+      {/* Left Column - Conversation */}
+      <div className="flex-1 flex flex-col min-w-0 bg-white border-r border-gray-200">
+        {/* Header bar */}
+        <div className="shrink-0 h-11 flex items-center justify-between px-4 border-b border-gray-200">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/rep/inbox" className="shrink-0">
+              <Button variant="ghost" size="sm" className="gap-1 h-7 px-2 text-muted-foreground hover:text-[#6f8551]">
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Inbox
+              </Button>
+            </Link>
+            <div className="h-4 w-px bg-gray-200 shrink-0" />
+            <h1 className="font-medium text-sm text-[#2D3E2F] truncate">{ticket.subject}</h1>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="font-mono text-[11px] text-muted-foreground">#{ticket._id.slice(-8).toUpperCase()}</span>
+            <TicketStatusBadge status={ticket.status as TicketStatus} />
+          </div>
         </div>
 
-        {/* context panel */}
-        <div className="space-y-4">
-          {/* AI context */}
-          <AIContextPanel
-            ticketId={ticketId}
-            ticketSubject={ticket.subject}
-            messages={[]}
-          />
+        {/* Info strip */}
+        <div className="shrink-0 h-9 flex items-center justify-between px-4 border-b border-gray-200 bg-gray-50/80">
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+            </span>
+            {ticket.vendor && (
+              <span className="flex items-center gap-1">
+                <Building className="h-3 w-3" />
+                {ticket.vendor.name}
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              {ticket.channel === "chat" && <MessageCircle className="h-3 w-3" />}
+              {ticket.channel === "call" && <Phone className="h-3 w-3" />}
+              {ticket.channel === "email" && <Mail className="h-3 w-3" />}
+              <span className="capitalize">{ticket.channel}</span>
+            </span>
+            <span className={cn(
+              "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium",
+              priorityConfig[ticket.priority].bg,
+              priorityConfig[ticket.priority].text
+            )}>
+              <span className={cn("w-1.5 h-1.5 rounded-full", priorityConfig[ticket.priority].dot)} />
+              {ticket.priority}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            {isUnassigned && (
+              <Button size="sm" onClick={handleAccept} disabled={loading !== null} className="h-6 text-[11px] px-2 bg-[#6f8551] hover:bg-[#5a6d42]">
+                {loading === "accept" && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                Accept
+              </Button>
+            )}
+            {isAssignedToMe && ticket.status === "assigned" && (
+              <Button size="sm" onClick={handleStartProgress} disabled={loading !== null} className="h-6 text-[11px] px-2 bg-[#6f8551] hover:bg-[#5a6d42]">
+                {loading === "progress" && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                Start
+              </Button>
+            )}
+            {isAssignedToMe && ticket.status === "in_progress" && (
+              <Button size="sm" onClick={handleResolve} disabled={loading !== null} className="h-6 text-[11px] px-2 bg-[#6f8551] hover:bg-[#5a6d42]">
+                {loading === "resolve" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle className="h-3 w-3 mr-1" />}
+                Resolve
+              </Button>
+            )}
+            {isAssignedToMe && ticket.status !== "closed" && ticket.status !== "resolved" && (
+              <Button size="sm" variant="outline" onClick={handleEscalate} disabled={loading !== null} className="h-6 text-[11px] px-2">
+                {loading === "escalate" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <ArrowUpRight className="h-3 w-3 mr-1" />}
+                Escalate
+              </Button>
+            )}
+            {ticket.status === "resolved" && (
+              <Button size="sm" variant="outline" onClick={handleClose} disabled={loading !== null} className="h-6 text-[11px] px-2">
+                {loading === "close" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                Close
+              </Button>
+            )}
+          </div>
+        </div>
 
-          {/* customer info */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Customer</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {ticket.customer ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-5 w-5 text-primary" />
+        {/* Call UI */}
+        {ticket.channel === "call" && isAssignedToMe && (
+          <div className="shrink-0 px-4 py-2 border-b border-gray-200">
+            {!twilioDevice.activeCall ? (
+              <div className="flex items-center gap-2 py-1.5 px-3 bg-purple-50 rounded border border-purple-100">
+                <Phone className="h-3.5 w-3.5 text-purple-600" />
+                <span className="text-xs text-purple-700 flex-1">
+                  {twilioDevice.state === "ready" ? "Ready to call customer" : "Connecting..."}
+                </span>
+                <Button
+                  size="sm"
+                  className="h-6 text-xs bg-purple-600 hover:bg-purple-700"
+                  disabled={twilioDevice.state !== "ready"}
+                  onClick={async () => {
+                    await twilioDevice.makeCall(`customer_${ticket.customerId}`);
+                    startCall(`call_${ticketId}`, "Customer");
+                    speech.start();
+                    setTranscripts([]);
+                  }}
+                >
+                  <Phone className="h-3 w-3 mr-1" /> Call
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between py-1.5 px-3 bg-green-50 rounded border border-green-100">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-full bg-green-500 p-1 animate-pulse">
+                      <Phone className="h-3 w-3 text-white" />
                     </div>
-                    <div>
-                      <p className="font-medium">{ticket.customer.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {ticket.customer.email}
-                      </p>
-                    </div>
+                    <span className="text-xs font-medium text-green-800">Call in progress</span>
+                    <CallTimer startTime={callStartTime} />
                   </div>
-                  <div className="text-sm text-muted-foreground pt-2 border-t">
-                    Language: {ticket.customer.language}
+                  <div className="flex gap-1">
+                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => twilioDevice.mute(!twilioDevice.isMuted)}>
+                      {twilioDevice.isMuted ? <MicOff className="h-3 w-3 text-red-500" /> : <Mic className="h-3 w-3" />}
+                    </Button>
+                    <Button variant="destructive" size="sm" className="h-6 text-xs" onClick={() => { twilioDevice.hangUp(); endCall(); speech.stop(); }}>
+                      <PhoneOff className="h-3 w-3 mr-1" /> End
+                    </Button>
                   </div>
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Customer info unavailable
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                <TranscriptionPanel transcripts={transcripts} className="h-20" />
+              </div>
+            )}
+          </div>
+        )}
 
-          {/* ticket details */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Priority</span>
-                <span className="font-medium capitalize">
-                  {ticket.priority}
-                </span>
+        {/* Conversation label */}
+        <div className="shrink-0 h-8 flex items-center px-4 border-b border-gray-200 bg-gray-50/50">
+          <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Conversation</span>
+        </div>
+
+        {/* Chat - fills remaining space */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {conversation ? (
+            <ChatInterface conversationId={conversation._id} ticketId={ticketId} />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="h-6 w-6 animate-spin text-[#6f8551]" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right Column - Sidebar */}
+      <div className="w-72 shrink-0 flex flex-col bg-white overflow-hidden">
+        {/* AI Panel */}
+        <div className="flex-1 min-h-0 overflow-auto border-b border-gray-200">
+          <AIContextPanel ticketId={ticketId} ticketSubject={ticket.subject} messages={[]} />
+        </div>
+
+        {/* Customer */}
+        <div className="shrink-0 p-3 border-b border-gray-200">
+          <div className="flex items-center gap-1.5 mb-2">
+            <User className="h-3 w-3 text-gray-400" />
+            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Customer</span>
+          </div>
+          {ticket.customer ? (
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-full bg-[#6f8551]/10 flex items-center justify-center shrink-0">
+                <User className="h-3.5 w-3.5 text-[#6f8551]" />
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Channel</span>
-                <span className="font-medium capitalize">{ticket.channel}</span>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-[#2D3E2F] truncate">{ticket.customer.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{ticket.customer.email}</p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Created</span>
-                <span className="font-medium">
-                  {new Date(ticket.createdAt).toLocaleDateString()}
-                </span>
+            </div>
+          ) : (
+            <p className="text-[10px] text-muted-foreground">No customer info</p>
+          )}
+        </div>
+
+        {/* Details */}
+        <div className="shrink-0 p-3">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
+            <div>
+              <span className="text-gray-400 uppercase tracking-wide">Priority</span>
+              <p className="font-medium text-[#2D3E2F] capitalize">{ticket.priority}</p>
+            </div>
+            <div>
+              <span className="text-gray-400 uppercase tracking-wide">Channel</span>
+              <p className="font-medium text-[#2D3E2F] capitalize">{ticket.channel}</p>
+            </div>
+            <div>
+              <span className="text-gray-400 uppercase tracking-wide">Created</span>
+              <p className="font-medium text-[#2D3E2F]">{new Date(ticket.createdAt).toLocaleDateString()}</p>
+            </div>
+            {ticket.rep && (
+              <div>
+                <span className="text-gray-400 uppercase tracking-wide">Assigned</span>
+                <p className="font-medium text-[#2D3E2F] truncate">{ticket.rep.name}</p>
               </div>
-              {ticket.rep && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Assigned to</span>
-                  <span className="font-medium">{ticket.rep.name}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>
