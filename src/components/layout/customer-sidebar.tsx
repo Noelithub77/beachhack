@@ -4,9 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  Ticket,
+  History,
   Building2,
-  HelpCircle,
   User,
   LogOut,
   PanelLeft,
@@ -28,10 +27,9 @@ import { useAuthStore } from "@/stores/auth-store";
 
 const navItems = [
   { label: "Dashboard", href: "/customer/dashboard", icon: LayoutDashboard },
-  { label: "Tickets", href: "/customer/tickets", icon: Ticket },
+  { label: "Services", href: "/customer/vendors", icon: Building2 },
+  { label: "History", href: "/customer/tickets", icon: History },
   { label: "Memory", href: "/customer/memory", icon: Brain },
-  { label: "Vendors", href: "/customer/vendors", icon: Building2 },
-  { label: "Help", href: "/customer/help", icon: HelpCircle },
   { label: "Profile", href: "/customer/profile", icon: User },
 ];
 
