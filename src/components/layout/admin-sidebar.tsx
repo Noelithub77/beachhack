@@ -39,9 +39,19 @@ const navItems = [
 
 // COCO Logo Component
 const CocoLogo = ({ size = 28 }: { size?: number }) => (
-  <svg width={size} height={size * 1.7} viewBox="0 0 34 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M28.8 4.8C22.4348 4.8 16.3303 7.32857 11.8294 11.8294C7.32855 16.3303 4.79999 22.4348 4.79999 28.8C4.79999 35.1652 7.32855 41.2697 11.8294 45.7706C16.3303 50.2714 22.4348 52.8 28.8 52.8" stroke="#7A9174" strokeWidth="9.6" strokeLinecap="round"/>
-    <path d="M4.79999 52.8C11.1652 52.8 17.2697 50.2714 21.7705 45.7706C26.2714 41.2697 28.8 35.1652 28.8 28.8C28.8 22.4348 26.2714 16.3303 21.7705 11.8294C17.2697 7.32857 11.1652 4.8 4.79999 4.8" stroke="#2D3E2F" strokeWidth="9.6" strokeLinecap="round"/>
+  <svg width={size} height={size} viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M40.8 4.8C34.4348 4.8 28.3303 7.32857 23.8294 11.8294C19.3286 16.3303 16.8 22.4348 16.8 28.8C16.8 35.1652 19.3286 41.2697 23.8294 45.7706C28.3303 50.2714 34.4348 52.8 40.8 52.8"
+      stroke="#7A9174"
+      strokeWidth="9.6"
+      strokeLinecap="round"
+    />
+    <path
+      d="M16.8 52.8C23.1652 52.8 29.2697 50.2714 33.7706 45.7706C38.2714 41.2697 40.8 35.1652 40.8 28.8C40.8 22.4348 38.2714 16.3303 33.7706 11.8294C29.2697 7.32857 23.1652 4.8 16.8 4.8"
+      stroke="#2D3E2F"
+      strokeWidth="9.6"
+      strokeLinecap="round"
+    />
   </svg>
 );
 
@@ -77,7 +87,7 @@ export function AdminSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="hover:bg-[#6f8551]/5">
               <Link href="/admin/dashboard">
-                <div className="flex aspect-square size-10 items-center justify-center">
+                <div className="flex aspect-square size-8 shrink-0 items-center justify-center">
                   <CocoLogo size={24} />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">

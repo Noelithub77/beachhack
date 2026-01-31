@@ -87,37 +87,37 @@ export default function LoginPage() {
         {/* Decorative top accent */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#b7cf9a] via-[#6f8551] to-[#b7cf9a]" />
         
-        <CardHeader className="space-y-4 text-center pt-8 pb-2">
+        <CardHeader className="space-y-3 md:space-y-4 text-center pt-6 md:pt-8 pb-2">
           {/* COCO Logo */}
           <div className="mx-auto flex items-center justify-center">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#b7cf9a] to-[#6f8551] rounded-2xl blur-xl opacity-30 animate-pulse" />
-              <div className="relative flex h-20 w-20 items-center justify-center">
-                <svg width="48" height="72" viewBox="0 0 34 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M28.8 4.8C22.4348 4.8 16.3303 7.32857 11.8294 11.8294C7.32855 16.3303 4.79999 22.4348 4.79999 28.8C4.79999 35.1652 7.32855 41.2697 11.8294 45.7706C16.3303 50.2714 22.4348 52.8 28.8 52.8" stroke="#7A9174" strokeWidth="9.6" strokeLinecap="round"/>
-                  <path d="M4.79999 52.8C11.1652 52.8 17.2697 50.2714 21.7705 45.7706C26.2714 41.2697 28.8 35.1652 28.8 28.8C28.8 22.4348 26.2714 16.3303 21.7705 11.8294C17.2697 7.32857 11.1652 4.8 4.79999 4.8" stroke="#2D3E2F" strokeWidth="9.6" strokeLinecap="round"/>
+              <div className="relative flex h-14 w-14 md:h-16 md:w-16 items-center justify-center">
+                <svg className="w-12 h-12 md:w-14 md:h-14" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M40.8 4.8C34.4348 4.8 28.3303 7.32857 23.8294 11.8294C19.3286 16.3303 16.8 22.4348 16.8 28.8C16.8 35.1652 19.3286 41.2697 23.8294 45.7706C28.3303 50.2714 34.4348 52.8 40.8 52.8" stroke="#7A9174" strokeWidth="9.6" strokeLinecap="round"/>
+                  <path d="M16.8 52.8C23.1652 52.8 29.2697 50.2714 33.7706 45.7706C38.2714 41.2697 40.8 35.1652 40.8 28.8C40.8 22.4348 38.2714 16.3303 33.7706 11.8294C29.2697 7.32857 23.1652 4.8 16.8 4.8" stroke="#2D3E2F" strokeWidth="9.6" strokeLinecap="round"/>
                 </svg>
               </div>
             </div>
           </div>
           
-          {/* Title with gradient */}
+          {/* Title with gradient - hidden subtitle on mobile */}
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-[#4a5a38] via-[#6f8551] to-[#4a5a38] bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-[#4a5a38] via-[#6f8551] to-[#4a5a38] bg-clip-text text-transparent">
               COCO
             </h1>
-            <p className="text-sm text-muted-foreground font-medium">
+            <p className="hidden md:block text-sm text-muted-foreground font-medium">
               Context Oriented Customer Ops
             </p>
           </div>
           
-          {/* Welcome message */}
-          <p className="text-xs text-muted-foreground/80 max-w-[280px] mx-auto">
+          {/* Welcome message - hidden on mobile */}
+          <p className="hidden md:block text-xs text-muted-foreground/80 max-w-[280px] mx-auto">
             Streamline your customer support with AI-powered insights
           </p>
         </CardHeader>
         
-        <CardContent className="px-6 pb-8">
+        <CardContent className="px-4 md:px-6 pb-6 md:pb-8">
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-foreground/80">
@@ -187,11 +187,11 @@ export default function LoginPage() {
           </form>
 
           {/* Demo accounts section */}
-          <div className="mt-8 pt-6 border-t border-muted-foreground/10">
-            <p className="mb-4 text-center text-xs text-muted-foreground">
-              Quick access • Password: <code className="px-1.5 py-0.5 rounded bg-muted text-[#6f8551] font-mono">password</code>
+          <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-muted-foreground/10">
+            <p className="mb-3 md:mb-4 text-center text-xs text-muted-foreground">
+              Quick access • Password: <code className="px-1 py-0.5 rounded bg-muted text-[#6f8551] font-mono text-[10px] md:text-xs">password</code>
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {demoAccounts.map((acc) => {
                 const Icon = acc.icon;
                 return (
@@ -200,10 +200,10 @@ export default function LoginPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => fillDemo(acc.email)}
-                    className="flex flex-col items-center gap-1.5 h-auto py-3 hover:bg-[#6f8551]/5 hover:border-[#6f8551]/30 transition-all group"
+                    className="flex flex-col items-center gap-1 h-auto py-2 md:py-3 hover:bg-[#6f8551]/5 hover:border-[#6f8551]/30 transition-all group"
                   >
-                    <Icon className="h-4 w-4 text-muted-foreground group-hover:text-[#6f8551] transition-colors" />
-                    <span className="text-xs font-medium">{acc.role}</span>
+                    <Icon className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground group-hover:text-[#6f8551] transition-colors" />
+                    <span className="text-[10px] md:text-xs font-medium">{acc.role}</span>
                   </Button>
                 );
               })}
