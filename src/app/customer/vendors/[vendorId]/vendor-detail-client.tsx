@@ -268,7 +268,9 @@ export function VendorDetailClient({
               <Button
                 size="lg"
                 className="w-full"
-                onClick={() => handleCreateTicket("chat")}
+                onClick={() =>
+                  router.push(`/customer/help/intake?vendor=${vendorId}`)
+                }
               >
                 Start Support Request
                 <ArrowRight className="ml-2 h-4 w-4" />
