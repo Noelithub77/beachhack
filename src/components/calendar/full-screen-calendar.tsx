@@ -28,6 +28,12 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from "@/components/ui/hover-card"
+
 interface Event {
     id: string | number
     name: string
@@ -36,6 +42,9 @@ interface Event {
     type?: string
     sourceId?: string
     sourceType?: string
+    className?: string
+    priority?: string
+    description?: string
 }
 
 interface CalendarData {
@@ -62,7 +71,7 @@ const colStartClasses = [
 export function FullScreenCalendar({ data, onEventClick, onDaySelect }: FullScreenCalendarProps) {
     const today = startOfToday()
     const [selectedDay, setSelectedDay] = React.useState(today)
-    
+
     // Notify parent on mount/change
     React.useEffect(() => {
         onDaySelect?.(selectedDay)
@@ -282,29 +291,58 @@ export function FullScreenCalendar({ data, onEventClick, onDaySelect }: FullScre
                                             .map((day) => (
                                                 <div key={day.day.toString()} className="space-y-1.5">
                                                     {day.events.slice(0, 1).map((event) => (
-                                                        <button
-                                                            key={event.id}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                onEventClick?.(event);
-                                                            }}
-                                                            className={cn(
-                                                                "w-full text-left flex flex-col items-start gap-1 rounded-lg border p-2 text-xs leading-tight transition-colors",
-                                                                event.type === "task" || event.sourceType === "task"
-                                                                    ? "bg-amber-50 border-amber-200 hover:bg-amber-100"
-                                                                    : "bg-muted/50 hover:bg-muted"
-                                                            )}
-                                                        >
-                                                            <p className="font-medium leading-none truncate w-full">
-                                                                {event.name}
-                                                            </p>
-                                                            <p className="leading-none text-muted-foreground">
-                                                                {event.time}
-                                                            </p>
-                                                        </button>
+                                                        <HoverCard key={event.id}>
+                                                            <HoverCardTrigger asChild>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        onEventClick?.(event);
+                                                                    }}
+                                                                    className={cn(
+                                                                        "w-full text-left flex flex-col items-start gap-1 rounded-lg border p-2 text-xs leading-tight transition-colors",
+                                                                        event.className ? event.className : (
+                                                                            event.type === "task" || event.sourceType === "task"
+                                                                                ? "bg-amber-50 border-amber-200 hover:bg-amber-100"
+                                                                                : "bg-muted/50 hover:bg-muted"
+                                                                        )
+                                                                    )}
+                                                                >
+                                                                    <p className="font-medium leading-none truncate w-full">
+                                                                        {event.name}
+                                                                    </p>
+                                                                    <p className="leading-none text-muted-foreground">
+                                                                        {event.time}
+                                                                    </p>
+                                                                </button>
+                                                            </HoverCardTrigger>
+                                                            <HoverCardContent className="w-80 z-50">
+                                                                <div className="space-y-2">
+                                                                    <h4 className="text-sm font-semibold">{event.name}</h4>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-xs text-muted-foreground">{event.time}</span>
+                                                                        {event.priority && (
+                                                                            <span className={cn(
+                                                                                "text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium border",
+                                                                                event.priority === "urgent" ? "bg-red-100 text-red-700 border-red-200" :
+                                                                                    event.priority === "high" ? "bg-orange-100 text-orange-700 border-orange-200" :
+                                                                                        event.priority === "medium" ? "bg-yellow-100 text-yellow-700 border-yellow-200" :
+                                                                                            "bg-slate-100 text-slate-700 border-slate-200"
+                                                                            )}>
+                                                                                {event.priority}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    {event.description && (
+                                                                        <p className="text-xs text-muted-foreground">
+                                                                            {event.description}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </HoverCardContent>
+                                                        </HoverCard>
                                                     ))}
                                                     {day.events.length > 1 && (
-                                                        <button 
+                                                        <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 // Show remaining events - click on 2nd one for now
