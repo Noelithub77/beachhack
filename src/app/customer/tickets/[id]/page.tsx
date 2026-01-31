@@ -32,6 +32,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { Suspense } from "react";
 import { cn } from "@/lib/utils";
+import { CustomerFeedback } from "@/components/feedback/customer-feedback";
 
 export default function TicketDetailPage() {
   const params = useParams();
@@ -39,6 +40,7 @@ export default function TicketDetailPage() {
   const ticketId = params.id as Id<"tickets">;
   const { user } = useAuthStore();
   const [showDetails, setShowDetails] = useState(false);
+  const [feedbackDismissed, setFeedbackDismissed] = useState(false);
 
   const ticket = useQuery(api.functions.tickets.getWithDetails, { ticketId });
   const conversation = useQuery(api.functions.conversations.getByTicket, {
@@ -103,7 +105,7 @@ export default function TicketDetailPage() {
     ticket.preferredContact;
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col overflow-hidden">
+    <div className="relative h-[calc(100vh-80px)] flex flex-col overflow-hidden">
       {/* Compact header bar */}
       <div className="shrink-0 flex items-center justify-between px-1 py-2 border-b border-[#6f8551]/10 bg-white/50">
         <Link href="/customer/tickets">
@@ -346,6 +348,27 @@ export default function TicketDetailPage() {
           )}
         </div>
       </div>
+
+
+      {/* Feedback Overlay */}
+      {ticket &&
+        (ticket.status === "resolved" || ticket.status === "closed") &&
+        !feedbackDismissed && (
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+              <CustomerFeedback
+                type="ticket"
+                vendorName={ticket.vendor?.name}
+                onSubmit={(data) => {
+                  console.log("Ticket feedback:", data);
+                  // TODO: persist feedback
+                  setFeedbackDismissed(true);
+                }}
+                onSkip={() => setFeedbackDismissed(true)}
+              />
+            </div>
+          </div>
+        )}
     </div>
   );
 }
