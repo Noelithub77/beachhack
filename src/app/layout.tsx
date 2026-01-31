@@ -14,28 +14,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-
 export const metadata: Metadata = {
-  title: "OrderGo - Restaurant Management",
-  description: "Modern restaurant management platform for QR ordering and operations",
+  title: "COCO - Context Oriented Customer Ops",
+  description: "Unified customer support platform with zero context loss",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "OrderGo",
+    title: "COCO",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: "website",
-    siteName: "OrderGo",
-    title: "OrderGo - Restaurant Management",
-    description: "Modern restaurant management platform for QR ordering and operations",
+    siteName: "COCO",
+    title: "COCO - Context Oriented Customer Ops",
+    description: "Unified customer support platform with zero context loss",
   },
   icons: {
-    icon: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
   },
 };
 
@@ -54,15 +53,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+          attribute="class"
+          defaultTheme="light"
+          disableTransitionOnChange
+        >
           <ErrorBoundary>
-            <ConvexClientProvider>
-              {children}
-            </ConvexClientProvider>
+            <ConvexClientProvider>{children}</ConvexClientProvider>
           </ErrorBoundary>
           <Toaster />
         </ThemeProvider>

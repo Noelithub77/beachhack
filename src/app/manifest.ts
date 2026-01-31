@@ -2,11 +2,11 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'orderGo',
-    short_name: 'orderGo',
+    name: 'COCO - Context Oriented Customer Ops',
+    short_name: 'COCO',
     display: 'standalone',
-    background_color: '#ff9f5f',
-    theme_color: '#ff4700',
+    background_color: '#0f172a',
+    theme_color: '#f6f46cff',
     icons: [
       {
         src: '/favicon.ico',
