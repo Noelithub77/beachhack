@@ -33,7 +33,6 @@ const navItems = [
   { label: "Employees", href: "/admin/employees", icon: Users },
   { label: "Calendar", href: "/admin/calendar", icon: Calendar },
   { label: "Tasks", href: "/admin/tasks", icon: ListTodo },
-  { label: "Vendors", href: "/admin/vendors", icon: Building2 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
