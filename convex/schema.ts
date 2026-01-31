@@ -99,6 +99,14 @@ export default defineSchema({
     severity: v.optional(v.string()), // e.g., "minor", "moderate", "major", "critical"
     urgency: v.optional(v.string()), // e.g., "low", "medium", "high", "immediate"
     preferredContact: v.optional(v.string()), // e.g., "email", "chat", "call"
+    // Escalation tracking
+    currentSupportLevel: v.optional(v.union(
+      v.literal("L1"),
+      v.literal("L2"),
+      v.literal("L3"),
+    )),
+    escalatedFrom: v.optional(v.id("users")),
+    escalatedAt: v.optional(v.number()),
     // AI summary
     aiSummary: v.optional(v.string()),
     // Timestamps

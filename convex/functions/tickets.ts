@@ -44,6 +44,7 @@ export const create = mutation({
     const id = await ctx.db.insert("tickets", {
       ...args,
       status: "created",
+      currentSupportLevel: "L1",
       createdAt: now,
       updatedAt: now,
     });
@@ -97,6 +98,7 @@ export const createFromIntake = mutation({
       severity: args.severity,
       urgency: args.urgency,
       preferredContact: args.preferredContact,
+      currentSupportLevel: "L1",
       createdAt: now,
       updatedAt: now,
     });
@@ -225,15 +227,53 @@ export const assign = mutation({
 export const escalate = mutation({
   args: {
     ticketId: v.id("tickets"),
-    newRepId: v.optional(v.id("users")),
+    repId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const ticket = await ctx.db.get(args.ticketId);
+    if (!ticket) throw new Error("Ticket not found");
+
+    // determine current and next support level
+    const currentLevel = ticket.currentSupportLevel || "L1";
+    let nextLevel: "L2" | "L3";
+
+    if (currentLevel === "L1") {
+      nextLevel = "L2";
+    } else if (currentLevel === "L2") {
+      nextLevel = "L3";
+    } else {
+      throw new Error("Cannot escalate beyond L3");
+    }
+
+    const now = Date.now();
+
+    // update ticket with escalation
     await ctx.db.patch(args.ticketId, {
       status: "escalated",
-      assignedRepId: args.newRepId,
-      updatedAt: Date.now(),
+      currentSupportLevel: nextLevel,
+      assignedRepId: undefined,
+      escalatedFrom: args.repId,
+      escalatedAt: now,
+      updatedAt: now,
     });
-    return { success: true };
+
+    // add system message to conversation
+    const conversation = await ctx.db
+      .query("conversations")
+      .withIndex("by_ticket", (q) => q.eq("ticketId", args.ticketId))
+      .first();
+
+    if (conversation) {
+      const rep = await ctx.db.get(args.repId);
+      await ctx.db.insert("messages", {
+        conversationId: conversation._id,
+        senderType: "system",
+        content: `Ticket escalated from ${currentLevel} to ${nextLevel} by ${rep?.name || "representative"}`,
+        createdAt: now,
+      });
+    }
+
+    return { success: true, nextLevel };
   },
 });
 
@@ -266,7 +306,7 @@ export const listActive = query({
   },
 });
 
-// list unassigned tickets for rep queue
+// list unassigned tickets for rep queue with level-based filtering
 export const listUnassigned = query({
   args: {
     vendorId: v.optional(v.id("vendors")),
@@ -278,6 +318,7 @@ export const listUnassigned = query({
         v.literal("docs"),
       )
     ),
+    repRole: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     let tickets;
@@ -296,6 +337,20 @@ export const listUnassigned = query({
 
     if (args.channel) {
       filtered = filtered.filter((t) => t.channel === args.channel);
+    }
+
+    // filter based on rep support level
+    if (args.repRole) {
+      if (args.repRole === "rep_l1") {
+        // L1 reps see tickets without a level or explicitly L1
+        filtered = filtered.filter((t) => !t.currentSupportLevel || t.currentSupportLevel === "L1");
+      } else if (args.repRole === "rep_l2") {
+        // L2 reps see only L2 escalated tickets
+        filtered = filtered.filter((t) => t.currentSupportLevel === "L2");
+      } else if (args.repRole === "rep_l3") {
+        // L3 reps see only L3 escalated tickets
+        filtered = filtered.filter((t) => t.currentSupportLevel === "L3");
+      }
     }
 
     return filtered;

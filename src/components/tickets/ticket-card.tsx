@@ -18,14 +18,16 @@ interface TicketCardProps {
   channel?: "chat" | "call" | "email" | "docs";
   category?: string;
   aiSummary?: string;
+  currentSupportLevel?: "L1" | "L2" | "L3";
 }
 
-const priorityColor: Record<string, { bg: string; text: string; dot: string }> = {
-  low: { bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" },
-  medium: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-400" },
-  high: { bg: "bg-orange-50", text: "text-orange-700", dot: "bg-orange-500" },
-  urgent: { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
-};
+const priorityColor: Record<string, { bg: string; text: string; dot: string }> =
+  {
+    low: { bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" },
+    medium: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-400" },
+    high: { bg: "bg-orange-50", text: "text-orange-700", dot: "bg-orange-500" },
+    urgent: { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
+  };
 
 const channelIcon: Record<string, React.ElementType> = {
   chat: MessageCircle,
@@ -53,6 +55,7 @@ export function TicketCard({
   channel,
   category,
   aiSummary,
+  currentSupportLevel,
 }: TicketCardProps) {
   const timeAgo = formatDistanceToNow(new Date(updatedAt), { addSuffix: true });
   const ChannelIcon = channel ? channelIcon[channel] : null;
@@ -69,7 +72,7 @@ export function TicketCard({
               <ChannelIcon className="h-4 w-4 text-[#6f8551]" />
             </div>
           )}
-          
+
           {/* Ticket ID */}
           <div className="flex flex-col items-center">
             <span className="text-[10px] font-medium text-[#6f8551]/60 uppercase tracking-widest mb-0.5">
@@ -96,14 +99,28 @@ export function TicketCard({
           {/* Top row - badges */}
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <TicketStatusBadge status={status} />
-            <div className={cn(
-              "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-              priorityColor[priority].bg,
-              priorityColor[priority].text
-            )}>
-              <span className={cn("w-1.5 h-1.5 rounded-full", priorityColor[priority].dot)} />
+            <div
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                priorityColor[priority].bg,
+                priorityColor[priority].text,
+              )}
+            >
+              <span
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  priorityColor[priority].dot,
+                )}
+              />
               {priority}
             </div>
+            {currentSupportLevel && (
+              <div className="flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5">
+                <span className="text-[10px] font-bold text-blue-700">
+                  {currentSupportLevel}
+                </span>
+              </div>
+            )}
             {category && (
               <span className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
                 {category}

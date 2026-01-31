@@ -26,23 +26,27 @@ export default function RepInbox() {
   const { user } = useAuthStore();
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>("all");
 
-  // fetch unassigned tickets with channel filter
+  // fetch unassigned tickets with channel filter and rep level
   const unassigned = useQuery(
     api.functions.tickets.listUnassigned,
     user?.vendorId
       ? {
           vendorId: user.vendorId as Id<"vendors">,
           channel: channelFilter === "all" ? undefined : channelFilter,
+          repRole: user.role,
         }
       : {
           channel: channelFilter === "all" ? undefined : channelFilter,
+          repRole: user?.role,
         },
   );
 
   // fetch all unassigned for counts
   const allUnassigned = useQuery(
     api.functions.tickets.listUnassigned,
-    user?.vendorId ? { vendorId: user.vendorId as Id<"vendors"> } : {},
+    user?.vendorId
+      ? { vendorId: user.vendorId as Id<"vendors">, repRole: user.role }
+      : { repRole: user?.role },
   );
 
   const assigned = useQuery(
@@ -143,6 +147,7 @@ export default function RepInbox() {
                     updatedAt={ticket.updatedAt}
                     href={`/rep/inbox/${ticket._id}`}
                     channel={ticket.channel}
+                    currentSupportLevel={ticket.currentSupportLevel}
                   />
                 ))}
             </div>
@@ -204,6 +209,7 @@ export default function RepInbox() {
                 updatedAt={ticket.updatedAt}
                 href={`/rep/inbox/${ticket._id}`}
                 channel={ticket.channel}
+                currentSupportLevel={ticket.currentSupportLevel}
               />
             ))}
           </div>

@@ -55,6 +55,7 @@ export default function RepTicketPage() {
   const assignTicket = useMutation(api.functions.tickets.assign);
   const updateStatus = useMutation(api.functions.tickets.updateStatus);
   const escalateTicket = useMutation(api.functions.tickets.escalate);
+  const saveTranscript = useMutation(api.functions.messages.send);
 
   const [creatingConversation, setCreatingConversation] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -71,17 +72,22 @@ export default function RepTicketPage() {
   });
 
   const speech = useSpeechRecognition({
-    onTranscript: (text, isFinal) => {
-      if (isFinal && text.trim()) {
-        setTranscripts((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            speaker: "customer",
-            text: text.trim(),
-            timestamp: Date.now(),
-          },
-        ]);
+    onTranscript: async (text, isFinal) => {
+      if (isFinal && text.trim() && conversation) {
+        const transcript: Transcript = {
+          id: Date.now().toString(),
+          speaker: "customer" as const,
+          text: text.trim(),
+          timestamp: Date.now(),
+        };
+        setTranscripts((prev) => [...prev, transcript]);
+
+        // save transcript to convex as message
+        await saveTranscript({
+          conversationId: conversation._id,
+          senderType: "customer",
+          content: `[Call Transcript] ${text.trim()}`,
+        });
       }
     },
   });
@@ -100,7 +106,13 @@ export default function RepTicketPage() {
         setCreatingConversation(false);
       });
     }
-  }, [conversation, ticket, ticketId, createConversation, creatingConversation]);
+  }, [
+    conversation,
+    ticket,
+    ticketId,
+    createConversation,
+    creatingConversation,
+  ]);
 
   const handleAccept = async () => {
     if (!user?.id) return;
@@ -131,9 +143,22 @@ export default function RepTicketPage() {
   };
 
   const handleEscalate = async () => {
+    if (!user?.id) return;
+    const currentLevel = ticket?.currentSupportLevel || "L1";
+    const nextLevel = currentLevel === "L1" ? "L2" : "L3";
+
+    if (
+      !confirm(`Escalate this ticket from ${currentLevel} to ${nextLevel}?`)
+    ) {
+      return;
+    }
+
     setLoading("escalate");
     try {
-      await escalateTicket({ ticketId });
+      await escalateTicket({ ticketId, repId: user.id as Id<"users"> });
+      alert(`Ticket escalated to ${nextLevel} successfully`);
+    } catch (error: any) {
+      alert(error.message || "Failed to escalate ticket");
     } finally {
       setLoading(null);
     }
@@ -174,10 +199,17 @@ export default function RepTicketPage() {
   const isAssignedToMe = ticket.assignedRepId === user?.id;
   const isUnassigned = !ticket.assignedRepId;
 
-  const priorityConfig: Record<string, { bg: string; text: string; dot: string }> = {
+  const priorityConfig: Record<
+    string,
+    { bg: string; text: string; dot: string }
+  > = {
     low: { bg: "bg-slate-100", text: "text-slate-600", dot: "bg-slate-400" },
     medium: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
-    high: { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-500" },
+    high: {
+      bg: "bg-orange-100",
+      text: "text-orange-700",
+      dot: "bg-orange-500",
+    },
     urgent: { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" },
   };
 
@@ -189,17 +221,32 @@ export default function RepTicketPage() {
         <div className="shrink-0 h-11 flex items-center justify-between px-4 border-b border-gray-200">
           <div className="flex items-center gap-3 min-w-0">
             <Link href="/rep/inbox" className="shrink-0">
-              <Button variant="ghost" size="sm" className="gap-1 h-7 px-2 text-muted-foreground hover:text-[#6f8551]">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 h-7 px-2 text-muted-foreground hover:text-[#6f8551]"
+              >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Inbox
               </Button>
             </Link>
             <div className="h-4 w-px bg-gray-200 shrink-0" />
-            <h1 className="font-medium text-sm text-[#2D3E2F] truncate">{ticket.subject}</h1>
+            <h1 className="font-medium text-sm text-[#2D3E2F] truncate">
+              {ticket.subject}
+            </h1>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="font-mono text-[11px] text-muted-foreground">#{ticket._id.slice(-8).toUpperCase()}</span>
+            <span className="font-mono text-[11px] text-muted-foreground">
+              #{ticket._id.slice(-8).toUpperCase()}
+            </span>
             <TicketStatusBadge status={ticket.status as TicketStatus} />
+            {ticket.currentSupportLevel && (
+              <div className="flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5">
+                <span className="text-[10px] font-bold text-blue-700">
+                  {ticket.currentSupportLevel}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -208,7 +255,9 @@ export default function RepTicketPage() {
           <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+              {formatDistanceToNow(new Date(ticket.createdAt), {
+                addSuffix: true,
+              })}
             </span>
             {ticket.vendor && (
               <span className="flex items-center gap-1">
@@ -217,49 +266,107 @@ export default function RepTicketPage() {
               </span>
             )}
             <span className="flex items-center gap-1">
-              {ticket.channel === "chat" && <MessageCircle className="h-3 w-3" />}
+              {ticket.channel === "chat" && (
+                <MessageCircle className="h-3 w-3" />
+              )}
               {ticket.channel === "call" && <Phone className="h-3 w-3" />}
               {ticket.channel === "email" && <Mail className="h-3 w-3" />}
               <span className="capitalize">{ticket.channel}</span>
             </span>
-            <span className={cn(
-              "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium",
-              priorityConfig[ticket.priority].bg,
-              priorityConfig[ticket.priority].text
-            )}>
-              <span className={cn("w-1.5 h-1.5 rounded-full", priorityConfig[ticket.priority].dot)} />
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium",
+                priorityConfig[ticket.priority].bg,
+                priorityConfig[ticket.priority].text,
+              )}
+            >
+              <span
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  priorityConfig[ticket.priority].dot,
+                )}
+              />
               {ticket.priority}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-1">
             {isUnassigned && (
-              <Button size="sm" onClick={handleAccept} disabled={loading !== null} className="h-6 text-[11px] px-2 bg-[#6f8551] hover:bg-[#5a6d42]">
-                {loading === "accept" && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+              <Button
+                size="sm"
+                onClick={handleAccept}
+                disabled={loading !== null}
+                className="h-6 text-[11px] px-2 bg-[#6f8551] hover:bg-[#5a6d42]"
+              >
+                {loading === "accept" && (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                )}
                 Accept
               </Button>
             )}
             {isAssignedToMe && ticket.status === "assigned" && (
-              <Button size="sm" onClick={handleStartProgress} disabled={loading !== null} className="h-6 text-[11px] px-2 bg-[#6f8551] hover:bg-[#5a6d42]">
-                {loading === "progress" && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+              <Button
+                size="sm"
+                onClick={handleStartProgress}
+                disabled={loading !== null}
+                className="h-6 text-[11px] px-2 bg-[#6f8551] hover:bg-[#5a6d42]"
+              >
+                {loading === "progress" && (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                )}
                 Start
               </Button>
             )}
             {isAssignedToMe && ticket.status === "in_progress" && (
-              <Button size="sm" onClick={handleResolve} disabled={loading !== null} className="h-6 text-[11px] px-2 bg-[#6f8551] hover:bg-[#5a6d42]">
-                {loading === "resolve" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle className="h-3 w-3 mr-1" />}
+              <Button
+                size="sm"
+                onClick={handleResolve}
+                disabled={loading !== null}
+                className="h-6 text-[11px] px-2 bg-[#6f8551] hover:bg-[#5a6d42]"
+              >
+                {loading === "resolve" ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                )}
                 Resolve
               </Button>
             )}
-            {isAssignedToMe && ticket.status !== "closed" && ticket.status !== "resolved" && (
-              <Button size="sm" variant="outline" onClick={handleEscalate} disabled={loading !== null} className="h-6 text-[11px] px-2">
-                {loading === "escalate" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <ArrowUpRight className="h-3 w-3 mr-1" />}
-                Escalate
-              </Button>
-            )}
+            {isAssignedToMe &&
+              ticket.status !== "closed" &&
+              ticket.status !== "resolved" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleEscalate}
+                  disabled={
+                    loading !== null || ticket.currentSupportLevel === "L3"
+                  }
+                  className="h-6 text-[11px] px-2"
+                >
+                  {loading === "escalate" ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  ) : (
+                    <ArrowUpRight className="h-3 w-3 mr-1" />
+                  )}
+                  {ticket.currentSupportLevel === "L3"
+                    ? "Max Level"
+                    : `Escalate to ${ticket.currentSupportLevel === "L2" ? "L3" : "L2"}`}
+                </Button>
+              )}
             {ticket.status === "resolved" && (
-              <Button size="sm" variant="outline" onClick={handleClose} disabled={loading !== null} className="h-6 text-[11px] px-2">
-                {loading === "close" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleClose}
+                disabled={loading !== null}
+                className="h-6 text-[11px] px-2"
+              >
+                {loading === "close" ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <XCircle className="h-3 w-3 mr-1" />
+                )}
                 Close
               </Button>
             )}
@@ -273,14 +380,18 @@ export default function RepTicketPage() {
               <div className="flex items-center gap-2 py-1.5 px-3 bg-purple-50 rounded border border-purple-100">
                 <Phone className="h-3.5 w-3.5 text-purple-600" />
                 <span className="text-xs text-purple-700 flex-1">
-                  {twilioDevice.state === "ready" ? "Ready to call customer" : "Connecting..."}
+                  {twilioDevice.state === "ready"
+                    ? "Ready to call customer"
+                    : "Connecting..."}
                 </span>
                 <Button
                   size="sm"
                   className="h-6 text-xs bg-purple-600 hover:bg-purple-700"
                   disabled={twilioDevice.state !== "ready"}
                   onClick={async () => {
-                    await twilioDevice.makeCall(`customer_${ticket.customerId}`);
+                    await twilioDevice.makeCall(
+                      `customer_${ticket.customerId}`,
+                    );
                     startCall(`call_${ticketId}`, "Customer");
                     speech.start();
                     setTranscripts([]);
@@ -296,19 +407,42 @@ export default function RepTicketPage() {
                     <div className="rounded-full bg-green-500 p-1 animate-pulse">
                       <Phone className="h-3 w-3 text-white" />
                     </div>
-                    <span className="text-xs font-medium text-green-800">Call in progress</span>
+                    <span className="text-xs font-medium text-green-800">
+                      Call in progress
+                    </span>
                     <CallTimer startTime={callStartTime} />
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => twilioDevice.mute(!twilioDevice.isMuted)}>
-                      {twilioDevice.isMuted ? <MicOff className="h-3 w-3 text-red-500" /> : <Mic className="h-3 w-3" />}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => twilioDevice.mute(!twilioDevice.isMuted)}
+                    >
+                      {twilioDevice.isMuted ? (
+                        <MicOff className="h-3 w-3 text-red-500" />
+                      ) : (
+                        <Mic className="h-3 w-3" />
+                      )}
                     </Button>
-                    <Button variant="destructive" size="sm" className="h-6 text-xs" onClick={() => { twilioDevice.hangUp(); endCall(); speech.stop(); }}>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-6 text-xs"
+                      onClick={() => {
+                        twilioDevice.hangUp();
+                        endCall();
+                        speech.stop();
+                      }}
+                    >
                       <PhoneOff className="h-3 w-3 mr-1" /> End
                     </Button>
                   </div>
                 </div>
-                <TranscriptionPanel transcripts={transcripts} className="h-20" />
+                <TranscriptionPanel
+                  transcripts={transcripts}
+                  className="h-20"
+                />
               </div>
             )}
           </div>
@@ -316,13 +450,18 @@ export default function RepTicketPage() {
 
         {/* Conversation label */}
         <div className="shrink-0 h-8 flex items-center px-4 border-b border-gray-200 bg-gray-50/50">
-          <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Conversation</span>
+          <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">
+            Conversation
+          </span>
         </div>
 
         {/* Chat - fills remaining space */}
         <div className="flex-1 min-h-0 overflow-hidden">
           {conversation ? (
-            <ChatInterface conversationId={conversation._id} ticketId={ticketId} />
+            <ChatInterface
+              conversationId={conversation._id}
+              ticketId={ticketId}
+            />
           ) : (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-6 w-6 animate-spin text-[#6f8551]" />
@@ -335,14 +474,20 @@ export default function RepTicketPage() {
       <div className="w-72 shrink-0 flex flex-col bg-white overflow-hidden">
         {/* AI Panel */}
         <div className="flex-1 min-h-0 overflow-auto border-b border-gray-200">
-          <AIContextPanel ticketId={ticketId} ticketSubject={ticket.subject} messages={[]} />
+          <AIContextPanel
+            ticketId={ticketId}
+            ticketSubject={ticket.subject}
+            messages={[]}
+          />
         </div>
 
         {/* Customer */}
         <div className="shrink-0 p-3 border-b border-gray-200">
           <div className="flex items-center gap-1.5 mb-2">
             <User className="h-3 w-3 text-gray-400" />
-            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Customer</span>
+            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+              Customer
+            </span>
           </div>
           {ticket.customer ? (
             <div className="flex items-center gap-2">
@@ -350,12 +495,18 @@ export default function RepTicketPage() {
                 <User className="h-3.5 w-3.5 text-[#6f8551]" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-medium text-[#2D3E2F] truncate">{ticket.customer.name}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{ticket.customer.email}</p>
+                <p className="text-xs font-medium text-[#2D3E2F] truncate">
+                  {ticket.customer.name}
+                </p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {ticket.customer.email}
+                </p>
               </div>
             </div>
           ) : (
-            <p className="text-[10px] text-muted-foreground">No customer info</p>
+            <p className="text-[10px] text-muted-foreground">
+              No customer info
+            </p>
           )}
         </div>
 
@@ -363,21 +514,37 @@ export default function RepTicketPage() {
         <div className="shrink-0 p-3">
           <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
             <div>
-              <span className="text-gray-400 uppercase tracking-wide">Priority</span>
-              <p className="font-medium text-[#2D3E2F] capitalize">{ticket.priority}</p>
+              <span className="text-gray-400 uppercase tracking-wide">
+                Priority
+              </span>
+              <p className="font-medium text-[#2D3E2F] capitalize">
+                {ticket.priority}
+              </p>
             </div>
             <div>
-              <span className="text-gray-400 uppercase tracking-wide">Channel</span>
-              <p className="font-medium text-[#2D3E2F] capitalize">{ticket.channel}</p>
+              <span className="text-gray-400 uppercase tracking-wide">
+                Channel
+              </span>
+              <p className="font-medium text-[#2D3E2F] capitalize">
+                {ticket.channel}
+              </p>
             </div>
             <div>
-              <span className="text-gray-400 uppercase tracking-wide">Created</span>
-              <p className="font-medium text-[#2D3E2F]">{new Date(ticket.createdAt).toLocaleDateString()}</p>
+              <span className="text-gray-400 uppercase tracking-wide">
+                Created
+              </span>
+              <p className="font-medium text-[#2D3E2F]">
+                {new Date(ticket.createdAt).toLocaleDateString()}
+              </p>
             </div>
             {ticket.rep && (
               <div>
-                <span className="text-gray-400 uppercase tracking-wide">Assigned</span>
-                <p className="font-medium text-[#2D3E2F] truncate">{ticket.rep.name}</p>
+                <span className="text-gray-400 uppercase tracking-wide">
+                  Assigned
+                </span>
+                <p className="font-medium text-[#2D3E2F] truncate">
+                  {ticket.rep.name}
+                </p>
               </div>
             )}
           </div>
