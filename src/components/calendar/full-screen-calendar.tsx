@@ -29,10 +29,13 @@ import { Separator } from "@/components/ui/separator"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
 interface Event {
-    id: number
+    id: string | number
     name: string
     time: string
     datetime: string
+    type?: string
+    sourceId?: string
+    sourceType?: string
 }
 
 interface CalendarData {
@@ -42,6 +45,8 @@ interface CalendarData {
 
 interface FullScreenCalendarProps {
     data: CalendarData[]
+    onEventClick?: (event: Event) => void
+    onDaySelect?: (date: Date) => void
 }
 
 const colStartClasses = [
@@ -54,9 +59,14 @@ const colStartClasses = [
     "col-start-7",
 ]
 
-export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
+export function FullScreenCalendar({ data, onEventClick, onDaySelect }: FullScreenCalendarProps) {
     const today = startOfToday()
     const [selectedDay, setSelectedDay] = React.useState(today)
+    
+    // Notify parent on mount/change
+    React.useEffect(() => {
+        onDaySelect?.(selectedDay)
+    }, [selectedDay, onDaySelect])
     const [currentMonth, setCurrentMonth] = React.useState(
         format(today, "MMM-yyyy"),
     )
@@ -148,11 +158,6 @@ export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
                         orientation="horizontal"
                         className="block w-full md:hidden"
                     />
-
-                    <Button className="w-full gap-2 md:w-auto">
-                        <PlusCircleIcon size={16} strokeWidth={2} aria-hidden="true" />
-                        <span>New Event</span>
-                    </Button>
                 </div>
             </div>
 
@@ -277,22 +282,38 @@ export function FullScreenCalendar({ data }: FullScreenCalendarProps) {
                                             .map((day) => (
                                                 <div key={day.day.toString()} className="space-y-1.5">
                                                     {day.events.slice(0, 1).map((event) => (
-                                                        <div
+                                                        <button
                                                             key={event.id}
-                                                            className="flex flex-col items-start gap-1 rounded-lg border bg-muted/50 p-2 text-xs leading-tight"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onEventClick?.(event);
+                                                            }}
+                                                            className={cn(
+                                                                "w-full text-left flex flex-col items-start gap-1 rounded-lg border p-2 text-xs leading-tight transition-colors",
+                                                                event.type === "task" || event.sourceType === "task"
+                                                                    ? "bg-amber-50 border-amber-200 hover:bg-amber-100"
+                                                                    : "bg-muted/50 hover:bg-muted"
+                                                            )}
                                                         >
-                                                            <p className="font-medium leading-none">
+                                                            <p className="font-medium leading-none truncate w-full">
                                                                 {event.name}
                                                             </p>
                                                             <p className="leading-none text-muted-foreground">
                                                                 {event.time}
                                                             </p>
-                                                        </div>
+                                                        </button>
                                                     ))}
                                                     {day.events.length > 1 && (
-                                                        <div className="text-xs text-muted-foreground">
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Show remaining events - click on 2nd one for now
+                                                                if (day.events[1]) onEventClick?.(day.events[1]);
+                                                            }}
+                                                            className="text-xs text-muted-foreground hover:text-foreground"
+                                                        >
                                                             + {day.events.length - 1} more
-                                                        </div>
+                                                        </button>
                                                     )}
                                                 </div>
                                             ))}

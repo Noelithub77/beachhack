@@ -148,11 +148,24 @@ export const get = query({
 export const listByCustomer = query({
   args: { customerId: v.id("users") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const tickets = await ctx.db
       .query("tickets")
       .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
       .order("desc")
       .collect();
+
+    // Enhance with vendor details
+    const ticketsWithVendor = await Promise.all(
+      tickets.map(async (ticket) => {
+        const vendor = await ctx.db.get(ticket.vendorId);
+        return {
+          ...ticket,
+          vendorName: vendor?.name,
+        };
+      })
+    );
+
+    return ticketsWithVendor;
   },
 });
 
@@ -262,7 +275,20 @@ export const listActive = query({
       .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
       .order("desc")
       .collect();
-    return tickets.filter((t) => t.status !== "closed");
+    const activeTickets = tickets.filter((t) => t.status !== "closed");
+
+    // Enhance with vendor details
+    const ticketsWithVendor = await Promise.all(
+      activeTickets.map(async (ticket) => {
+        const vendor = await ctx.db.get(ticket.vendorId);
+        return {
+          ...ticket,
+          vendorName: vendor?.name,
+        };
+      })
+    );
+
+    return ticketsWithVendor;
   },
 });
 
