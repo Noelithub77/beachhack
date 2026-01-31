@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { ErrorBoundary } from "@/components/error-boundary";
+import ErrorBoundary from "@/components/error-boundary";
 
 export default function RootLayout({
   children,

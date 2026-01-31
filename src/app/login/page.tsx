@@ -25,7 +25,7 @@ const BackgroundRippleEffect = dynamic(
 const demoAccounts = [
   { email: "customer@coco.com", role: "Customer", icon: User },
   { email: "rep.l1@coco.com", role: "Rep L1", icon: Headphones },
-  { email: "rep.l2@coco.com", role: "Rep L2" },
+  { email: "rep.l2@coco.com", role: "Rep L2", icon: Headphones },
   { email: "admin.manager@coco.com", role: "Admin", icon: Shield },
 ];
 

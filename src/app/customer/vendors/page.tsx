@@ -210,9 +210,9 @@ export default function CustomerVendors() {
           </div>
         ) : (
           <>
-            <h1 className="text-2xl font-semibold">Vendors</h1>
+            <h1 className="text-2xl font-semibold">Services</h1>
             <p className="text-muted-foreground">
-              Select a vendor to manage support
+              Browse available service providers
             </p>
           </>
         )}

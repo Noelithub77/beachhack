@@ -15,6 +15,10 @@ import {
   CheckCircle,
   ArrowUpRight,
   XCircle,
+  Phone,
+  PhoneOff,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -26,6 +30,15 @@ import { AIContextPanel } from "@/components/tickets/ai-context-panel";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
+import { useTwilioDevice } from "@/hooks/use-twilio-device";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { RepSuggestionPanel } from "@/components/call/rep-suggestion-panel";
+import {
+  TranscriptionPanel,
+  type Transcript,
+} from "@/components/call/transcription-panel";
+import { CallTimer } from "@/components/call/call-timer";
+import { useCallStore } from "@/stores/call-store";
 
 export default function RepTicketPage() {
   const params = useParams();
@@ -44,6 +57,43 @@ export default function RepTicketPage() {
 
   const [creatingConversation, setCreatingConversation] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
+  const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+  const { callStartTime, startCall, endCall } = useCallStore();
+
+  // Twilio device for call tickets
+  const twilioDevice = useTwilioDevice({
+    identity: user?.id ? `rep_${user.id}` : "",
+    onIncomingCall: () => {},
+    onCallDisconnect: () => {
+      endCall();
+      speech.stop();
+    },
+  });
+
+  const speech = useSpeechRecognition({
+    onTranscript: (text, isFinal) => {
+      if (isFinal && text.trim()) {
+        setTranscripts((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            speaker: "customer",
+            text: text.trim(),
+            timestamp: Date.now(),
+          },
+        ]);
+      }
+    },
+  });
+
+  // register Twilio when viewing call ticket
+  useEffect(() => {
+    if (ticket?.channel === "call" && user?.id) {
+      twilioDevice.register();
+    }
+    return () => twilioDevice.unregister();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket?.channel, user?.id]);
 
   useEffect(() => {
     if (conversation === null && ticket && !creatingConversation) {
@@ -244,6 +294,87 @@ export default function RepTicketPage() {
                   </Button>
                 )}
               </div>
+
+              {/* Call UI for call-channel tickets */}
+              {ticket.channel === "call" && isAssignedToMe && (
+                <div className="pt-4 border-t">
+                  {!twilioDevice.activeCall ? (
+                    <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                      <div className="rounded-full bg-purple-100 dark:bg-purple-900 p-2">
+                        <Phone className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Call the customer</p>
+                        <p className="text-xs text-muted-foreground">
+                          {twilioDevice.state === "ready"
+                            ? "Ready to call"
+                            : "Connecting..."}
+                        </p>
+                      </div>
+                      <Button
+                        className="bg-purple-600 hover:bg-purple-700"
+                        size="sm"
+                        disabled={twilioDevice.state !== "ready"}
+                        onClick={async () => {
+                          const customerId = ticket.customerId;
+                          await twilioDevice.makeCall(`customer_${customerId}`);
+                          startCall(`call_${ticketId}`, "Customer");
+                          speech.start();
+                          setTranscripts([]);
+                        }}
+                      >
+                        <Phone className="h-4 w-4 mr-1" /> Call
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-full bg-green-500 p-2 animate-pulse">
+                            <Phone className="h-4 w-4 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                              Call in progress
+                            </p>
+                            <CallTimer startTime={callStartTime} />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() =>
+                              twilioDevice.mute(!twilioDevice.isMuted)
+                            }
+                          >
+                            {twilioDevice.isMuted ? (
+                              <MicOff className="h-4 w-4 text-red-500" />
+                            ) : (
+                              <Mic className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              twilioDevice.hangUp();
+                              endCall();
+                              speech.stop();
+                            }}
+                          >
+                            <PhoneOff className="h-4 w-4 mr-1" /> End
+                          </Button>
+                        </div>
+                      </div>
+                      <TranscriptionPanel
+                        transcripts={transcripts}
+                        className="h-32"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 

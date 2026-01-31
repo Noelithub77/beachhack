@@ -11,7 +11,6 @@ import {
   LogOut,
   PanelLeft,
   User,
-  PhoneCall,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,7 +28,6 @@ import { useAuthStore } from "@/stores/auth-store";
 
 const navItems = [
   { label: "Inbox", href: "/rep/inbox", icon: Inbox },
-  { label: "Call Center", href: "/rep/call", icon: PhoneCall },
   { label: "Calendar", href: "/rep/calendar", icon: Calendar },
   { label: "Tasks", href: "/rep/tasks", icon: ListTodo },
   { label: "Analytics", href: "/rep/analytics", icon: BarChart3 },
