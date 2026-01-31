@@ -25,7 +25,7 @@ import {
   TicketStatusBadge,
   TicketStatus,
 } from "@/components/tickets/ticket-status-badge";
-import { ChatInterface } from "@/components/chat/chat-interface";
+import { AIChatInterface } from "@/components/chat/ai-chat-interface";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
@@ -253,9 +253,10 @@ export default function TicketDetailPage() {
                 </div>
               }
             >
-              <ChatInterface
+              <AIChatInterface
                 conversationId={conversation._id}
                 ticketId={ticketId}
+                vendorName={ticket.vendor?.name}
               />
             </Suspense>
           ) : (

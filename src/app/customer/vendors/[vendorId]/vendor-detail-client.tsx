@@ -221,7 +221,9 @@ export function VendorDetailClient({
             </Card>
             <Card
               className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/30 hover:scale-[1.02]"
-              onClick={() => handleCreateTicket("call")}
+              onClick={() =>
+                router.push(`/customer/help/call?vendor=${vendorId}`)
+              }
             >
               <CardContent className="flex flex-col items-center p-6 text-center">
                 <div className="rounded-xl bg-primary/10 p-4 mb-4">
