@@ -4,7 +4,7 @@ import { mutation, query } from "../_generated/server";
 // start call session
 export const start = mutation({
     args: {
-        ticketId: v.id("tickets"),
+        ticketId: v.optional(v.id("tickets")),
         callerId: v.id("users"),
         receiverId: v.optional(v.id("users")),
     },

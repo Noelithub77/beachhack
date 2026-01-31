@@ -1,8 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuthStore } from "@/stores/auth-store";
@@ -20,19 +18,11 @@ export default function CustomerTickets() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">My Tickets</h1>
-          <p className="text-muted-foreground">
-            Track and manage your support requests
-          </p>
-        </div>
-        <Link href="/customer/tickets/new">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Ticket
-          </Button>
-        </Link>
+      <div>
+        <h1 className="text-2xl font-semibold">My Tickets</h1>
+        <p className="text-muted-foreground">
+          Track and manage your support requests
+        </p>
       </div>
 
       {tickets === undefined ? (
@@ -45,12 +35,9 @@ export default function CustomerTickets() {
         <Card>
           <CardContent className="flex flex-col items-center py-12 text-center">
             <p className="text-muted-foreground">No tickets yet</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              Create your first support ticket to get help
+            <p className="text-sm text-muted-foreground">
+              Your support requests will appear here
             </p>
-            <Link href="/customer/tickets/new">
-              <Button>Create Ticket</Button>
-            </Link>
           </CardContent>
         </Card>
       ) : (

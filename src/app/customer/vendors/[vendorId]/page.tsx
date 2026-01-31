@@ -267,7 +267,7 @@ export default function VendorDetailPage() {
               </p>
               <Button
                 size="lg"
-                className="w-full bg-sage-600 hover:bg-sage-700 text-white"
+                className="w-full"
                 onClick={handleHumanHelp}
               >
                 Start Support Request

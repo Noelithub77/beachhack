@@ -135,7 +135,7 @@ export default defineSchema({
 
   // voice call sessions
   callSessions: defineTable({
-    ticketId: v.id("tickets"),
+    ticketId: v.optional(v.id("tickets")),
     callerId: v.id("users"),
     receiverId: v.optional(v.id("users")),
     twilioSid: v.optional(v.string()),
