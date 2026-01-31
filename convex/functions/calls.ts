@@ -1,22 +1,45 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 
-// start call session
+// start call session - auto-creates ticket
 export const start = mutation({
     args: {
-        ticketId: v.optional(v.id("tickets")),
+        vendorId: v.id("vendors"),
         callerId: v.id("users"),
         receiverId: v.optional(v.id("users")),
     },
     handler: async (ctx, args) => {
-        const id = await ctx.db.insert("callSessions", {
-            ticketId: args.ticketId,
+        const now = Date.now();
+
+        // auto-create ticket with default values
+        const ticketId = await ctx.db.insert("tickets", {
+            customerId: args.callerId,
+            vendorId: args.vendorId,
+            status: "intake_in_progress",
+            channel: "call",
+            priority: "medium",
+            subject: "Voice support call",
+            createdAt: now,
+            updatedAt: now,
+        });
+
+        // create call session linked to ticket
+        const callSessionId = await ctx.db.insert("callSessions", {
+            ticketId,
             callerId: args.callerId,
             receiverId: args.receiverId,
             status: "ringing",
-            startedAt: Date.now(),
+            startedAt: now,
         });
-        return { success: true, callSessionId: id };
+
+        // create initial conversation
+        await ctx.db.insert("conversations", {
+            ticketId,
+            channel: "call",
+            createdAt: now,
+        });
+
+        return { success: true, callSessionId, ticketId };
     },
 });
 

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, Brain } from "lucide-react";
 
-export default function AdminMemory() {
+export default function CustomerMemory() {
   const [documents, setDocuments] = useState<DocumentWithMemories[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -62,25 +62,21 @@ export default function AdminMemory() {
     fetchDocuments(1, false);
   };
 
-  // no API key configured
   if (error?.message.includes("not configured")) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">Memory Graph</h1>
-            <p className="text-muted-foreground">
-              Visualize AI memory and connections
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold">Your Memory</h1>
+          <p className="text-muted-foreground">
+            Visualize your AI memory and connections
+          </p>
         </div>
 
         <Card className="py-12 text-center">
           <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="font-medium mb-2">Supermemory Not Configured</h3>
+          <h3 className="font-medium mb-2">Memory Not Configured</h3>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Add your SUPERMEMORY_API_KEY to the environment variables to
-            enable the memory graph visualization.
+            Memory features will be available soon. Start chatting with SAGE to build your memory.
           </p>
         </Card>
       </div>
@@ -88,15 +84,15 @@ export default function AdminMemory() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Memory Graph</h1>
+          <h1 className="text-2xl font-semibold">Your Memory</h1>
           <p className="text-muted-foreground">
-            Visualize AI memory and connections
+            Visualize your AI memory and connections
           </p>
         </div>
-        <Button onClick={refresh} variant="outline" disabled={isLoading}>
+        <Button onClick={refresh} variant="outline" size="sm" disabled={isLoading}>
           <RefreshCw
             className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
           />
@@ -104,16 +100,16 @@ export default function AdminMemory() {
         </Button>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="h-150">
+      <Card className="flex-1 min-h-0 overflow-hidden">
+        <div className="h-full min-h-125">
           {isLoading && documents.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              <p className="text-destructive mb-4">{error.message}</p>
-              <Button onClick={refresh} variant="outline">
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+              <p className="text-destructive">{error.message}</p>
+              <Button onClick={refresh} variant="outline" size="sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry
               </Button>
@@ -123,7 +119,7 @@ export default function AdminMemory() {
               <Brain className="h-12 w-12 mb-4 text-muted-foreground" />
               <p className="text-muted-foreground">No memories yet</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Start conversations to build your memory graph
+                Start chatting with SAGE to build your memory graph
               </p>
             </div>
           ) : (
@@ -134,7 +130,7 @@ export default function AdminMemory() {
               hasMore={hasMore}
               totalLoaded={documents.length}
               loadMoreDocuments={loadMore}
-              variant="console"
+              variant="consumer"
             />
           )}
         </div>

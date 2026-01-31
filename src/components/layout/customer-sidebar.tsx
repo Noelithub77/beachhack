@@ -11,6 +11,7 @@ import {
   LogOut,
   MessageCircle,
   PanelLeft,
+  Brain,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,6 +30,7 @@ import { useAuthStore } from "@/stores/auth-store";
 const navItems = [
   { label: "Dashboard", href: "/customer/dashboard", icon: LayoutDashboard },
   { label: "Tickets", href: "/customer/tickets", icon: Ticket },
+  { label: "Memory", href: "/customer/memory", icon: Brain },
   { label: "Vendors", href: "/customer/vendors", icon: Building2 },
   { label: "Help", href: "/customer/help", icon: HelpCircle },
   { label: "Profile", href: "/customer/profile", icon: User },

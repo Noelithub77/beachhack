@@ -10,7 +10,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { MemoryPreview } from "@/components/ai-elements/memory-preview";
 
 const helpOptions = [
   {
@@ -53,9 +52,6 @@ export default function CustomerHelp() {
           Choose how you would like to connect
         </p>
       </div>
-
-      {/* memory preview */}
-      <MemoryPreview />
 
       {/* AI first */}
       <section className="space-y-3">

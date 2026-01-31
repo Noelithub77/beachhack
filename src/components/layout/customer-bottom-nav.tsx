@@ -9,14 +9,15 @@ import {
   HelpCircle,
   User,
   MessageCircle,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Home", href: "/customer/dashboard", icon: LayoutDashboard },
   { label: "Tickets", href: "/customer/tickets", icon: Ticket },
+  { label: "Memory", href: "/customer/memory", icon: Brain },
   { label: "Chat", href: "/customer/chat", icon: MessageCircle },
-  { label: "Vendors", href: "/customer/vendors", icon: Building2 },
   { label: "Profile", href: "/customer/profile", icon: User },
 ];
 

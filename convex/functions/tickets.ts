@@ -317,3 +317,36 @@ export const listByVendorAndCustomer = query({
     return tickets.filter((t) => t.vendorId === args.vendorId);
   },
 });
+
+// update ticket details (subject, priority, description, category, etc.)
+export const updateDetails = mutation({
+  args: {
+    ticketId: v.id("tickets"),
+    subject: v.optional(v.string()),
+    priority: v.optional(v.union(
+      v.literal("low"),
+      v.literal("medium"),
+      v.literal("high"),
+      v.literal("urgent"),
+    )),
+    description: v.optional(v.string()),
+    category: v.optional(v.string()),
+    severity: v.optional(v.string()),
+    urgency: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const updates: Record<string, any> = {
+      updatedAt: Date.now(),
+    };
+
+    if (args.subject !== undefined) updates.subject = args.subject;
+    if (args.priority !== undefined) updates.priority = args.priority;
+    if (args.description !== undefined) updates.description = args.description;
+    if (args.category !== undefined) updates.category = args.category;
+    if (args.severity !== undefined) updates.severity = args.severity;
+    if (args.urgency !== undefined) updates.urgency = args.urgency;
+
+    await ctx.db.patch(args.ticketId, updates);
+    return { success: true };
+  },
+});
