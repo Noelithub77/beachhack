@@ -42,3 +42,5 @@ creds
 
 .env.local
 nul
+
+scripts/ignore

@@ -156,21 +156,33 @@ export function AIChatInterface({
 
   // process ticket with AI (fire and forget)
   const triggerAiProcessing = async (tid: Id<"tickets">) => {
+    console.log("[AI Trigger] Starting analysis for ticket:", tid);
     setIsAnalyzing(true);
     try {
-      const content = await fetch(
+      const contentRes = await fetch(
         `/api/convex/ticket-content?ticketId=${tid}`,
-      ).then((r) => r.json());
-      if (!content || content.length === 0) return;
+      );
+      const content = await contentRes.json();
+      console.log("[AI Trigger] Fetched content count:", content?.length || 0);
 
-      const analysis = await fetch("/api/ai/process-ticket", {
+      if (!content || content.length === 0) {
+        console.log("[AI Trigger] No content, skipping");
+        return;
+      }
+
+      const analysisRes = await fetch("/api/ai/process-ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticketId: tid, conversation: content }),
-      }).then((r) => r.json());
+      });
+      const analysis = await analysisRes.json();
+      console.log(
+        "[AI Trigger] Analysis result:",
+        analysis.success ? "success" : "failed",
+      );
 
       if (analysis.success && analysis.analysis) {
-        await fetch("/api/ai/apply-analysis", {
+        const applyRes = await fetch("/api/ai/apply-analysis", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -180,9 +192,11 @@ export function AIChatInterface({
             analysis: analysis.analysis,
           }),
         });
+        const applyResult = await applyRes.json();
+        console.log("[AI Trigger] Applied analysis:", applyResult);
       }
     } catch (err) {
-      console.error("[AI Processing] Error:", err);
+      console.error("[AI Trigger] Error:", err);
     } finally {
       setIsAnalyzing(false);
     }

@@ -111,20 +111,33 @@ export function ChatInterface({
 
   // process ticket with AI (fire and forget)
   const triggerAiProcessing = async (tid: Id<"tickets">) => {
+    console.log("[AI Trigger] Starting analysis for ticket:", tid);
+    setIsAnalyzing(true);
     try {
-      const content = await fetch(
+      const contentRes = await fetch(
         `/api/convex/ticket-content?ticketId=${tid}`,
-      ).then((r) => r.json());
-      if (!content || content.length === 0) return;
+      );
+      const content = await contentRes.json();
+      console.log("[AI Trigger] Fetched content count:", content?.length || 0);
 
-      const analysis = await fetch("/api/ai/process-ticket", {
+      if (!content || content.length === 0) {
+        console.log("[AI Trigger] No content, skipping");
+        return;
+      }
+
+      const analysisRes = await fetch("/api/ai/process-ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticketId: tid, conversation: content }),
-      }).then((r) => r.json());
+      });
+      const analysis = await analysisRes.json();
+      console.log(
+        "[AI Trigger] Analysis result:",
+        analysis.success ? "success" : "failed",
+      );
 
       if (analysis.success && analysis.analysis) {
-        await fetch("/api/ai/apply-analysis", {
+        const applyRes = await fetch("/api/ai/apply-analysis", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -134,9 +147,11 @@ export function ChatInterface({
             analysis: analysis.analysis,
           }),
         });
+        const applyResult = await applyRes.json();
+        console.log("[AI Trigger] Applied analysis:", applyResult);
       }
     } catch (err) {
-      console.error("[AI Processing] Error:", err);
+      console.error("[AI Trigger] Error:", err);
     } finally {
       setIsAnalyzing(false);
     }
@@ -190,11 +205,11 @@ export function ChatInterface({
                     "max-w-[80%] rounded-2xl px-4 py-2",
                     isSystem && "bg-muted text-muted-foreground text-sm italic",
                     isAi &&
-                    "bg-primary/10 text-foreground border border-primary/20",
+                      "bg-primary/10 text-foreground border border-primary/20",
                     !isSystem &&
-                    !isAi &&
-                    isOwn &&
-                    "bg-primary text-primary-foreground",
+                      !isAi &&
+                      isOwn &&
+                      "bg-primary text-primary-foreground",
                     !isSystem && !isAi && !isOwn && "bg-muted text-foreground",
                   )}
                 >
@@ -245,8 +260,9 @@ export function ChatInterface({
             onClick={handleSend}
             disabled={isLoading || !message.trim()}
             className={cn(
-              isLoading && showAiIndicators &&
-              "[animation:spin_1s_linear_infinite] scale-[0.8] aspect-square p-2",
+              isLoading &&
+                showAiIndicators &&
+                "[animation:spin_1s_linear_infinite] scale-[0.8] aspect-square p-2",
             )}
           >
             {(!isLoading || !showAiIndicators) && <Send className="h-4 w-4" />}
