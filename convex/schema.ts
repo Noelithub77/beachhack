@@ -231,6 +231,12 @@ export default defineSchema({
     createdById: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
+    priority: v.optional(v.union(
+      v.literal("low"),
+      v.literal("medium"),
+      v.literal("high"),
+      v.literal("urgent"),
+    )),
     status: v.union(
       v.literal("pending"),
       v.literal("in_progress"),
