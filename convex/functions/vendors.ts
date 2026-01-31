@@ -9,11 +9,48 @@ export const list = query({
     },
 });
 
+// list all vendor categories
+export const listCategories = query({
+    args: {},
+    handler: async (ctx) => {
+        const vendors = await ctx.db.query("vendors").filter((q) => q.eq(q.field("isActive"), true)).collect();
+        const categories = [...new Set(vendors.map(v => v.category).filter(Boolean))];
+        return categories as string[];
+    },
+});
+
+// list vendors with user favorites
+export const listWithFavorites = query({
+    args: { userId: v.id("users") },
+    handler: async (ctx, args) => {
+        const vendors = await ctx.db.query("vendors").filter((q) => q.eq(q.field("isActive"), true)).collect();
+        const favorites = await ctx.db
+            .query("userFavorites")
+            .withIndex("by_user", (q) => q.eq("userId", args.userId))
+            .collect();
+        
+        const favoriteVendorIds = new Set(favorites.map(f => f.vendorId));
+        
+        return vendors.map(vendor => ({
+            ...vendor,
+            isFavorite: favoriteVendorIds.has(vendor._id),
+        }));
+    },
+});
+
 // get vendor by id
 export const get = query({
     args: { vendorId: v.id("vendors") },
     handler: async (ctx, args) => {
         return await ctx.db.get(args.vendorId);
+    },
+});
+
+// get vendor by id (alternative name for consistency)
+export const getById = query({
+    args: { id: v.id("vendors") },
+    handler: async (ctx, args) => {
+        return await ctx.db.get(args.id);
     },
 });
 

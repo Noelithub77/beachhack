@@ -199,3 +199,19 @@ export const getWithDetails = query({
     },
 });
 
+// list tickets for a specific vendor and customer
+export const listByVendorAndCustomer = query({
+    args: {
+        vendorId: v.id("vendors"),
+        customerId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const tickets = await ctx.db
+            .query("tickets")
+            .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
+            .order("desc")
+            .collect();
+        return tickets.filter((t) => t.vendorId === args.vendorId);
+    },
+});
+

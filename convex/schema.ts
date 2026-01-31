@@ -61,9 +61,27 @@ export default defineSchema({
     name: v.string(),
     logoStorageId: v.optional(v.id("_storage")),
     primaryColor: v.optional(v.string()),
+    category: v.optional(v.string()), // e.g., "Technology", "Finance", "Healthcare"
+    description: v.optional(v.string()),
+    website: v.optional(v.string()),
+    supportEmail: v.optional(v.string()),
+    supportPhone: v.optional(v.string()),
+    slaResponseHours: v.optional(v.number()),
+    contractStartDate: v.optional(v.number()),
+    contractEndDate: v.optional(v.number()),
+    notes: v.optional(v.string()),
     isActive: v.boolean(),
     createdAt: v.number(),
-  }),
+  }).index("by_category", ["category"]),
+
+  // user favorites for vendors
+  userFavorites: defineTable({
+    userId: v.id("users"),
+    vendorId: v.id("vendors"),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_vendor", ["userId", "vendorId"]),
 
   // core ticket entity
   tickets: defineTable({
