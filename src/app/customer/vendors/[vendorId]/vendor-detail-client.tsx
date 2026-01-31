@@ -40,6 +40,7 @@ import { TicketCard } from "@/components/tickets/ticket-card";
 import { TicketStatus } from "@/components/tickets/ticket-status-badge";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format } from "date-fns";
+import { useState } from "react";
 
 interface VendorDetailClientProps {
   vendorId: string;
@@ -54,8 +55,10 @@ export function VendorDetailClient({
 }: VendorDetailClientProps) {
   const router = useRouter();
   const { user } = useAuthStore();
+  const [isCreating, setIsCreating] = useState(false);
 
   const vendorWithStats = usePreloadedQuery(preloadedVendor);
+  const createTicket = useMutation(api.functions.tickets.create);
 
   const tickets = useQuery(
     api.functions.tickets.listByVendorAndCustomer,
@@ -75,6 +78,26 @@ export function VendorDetailClient({
       userId: user.id as Id<"users">,
       vendorId: vendorId as Id<"vendors">,
     });
+  };
+
+  // create ticket and redirect
+  const handleCreateTicket = async (channel: "chat" | "call") => {
+    if (!user?.id || isCreating) return;
+    setIsCreating(true);
+    try {
+      const result = await createTicket({
+        customerId: user.id as Id<"users">,
+        vendorId: vendorId as Id<"vendors">,
+        channel,
+        priority: "medium",
+        subject: channel === "chat" ? "AI Chat Support" : "AI Voice Support",
+      });
+      if (result.ticketId) {
+        router.push(`/customer/tickets/${result.ticketId}`);
+      }
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   if (vendorWithStats === undefined) {
@@ -103,18 +126,6 @@ export function VendorDetailClient({
   }
 
   const vendor = vendorWithStats;
-
-  const handleAIChat = () => {
-    router.push(`/customer/help/chat?vendor=${vendorId}`);
-  };
-
-  const handleAICall = () => {
-    router.push(`/customer/help/call?vendor=${vendorId}`);
-  };
-
-  const handleHumanHelp = () => {
-    router.push(`/customer/help/intake?vendor=${vendorId}`);
-  };
 
   return (
     <div className="space-y-6">
@@ -196,7 +207,7 @@ export function VendorDetailClient({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card
               className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/30 hover:scale-[1.02]"
-              onClick={handleAIChat}
+              onClick={() => handleCreateTicket("chat")}
             >
               <CardContent className="flex flex-col items-center p-6 text-center">
                 <div className="rounded-xl bg-primary/10 p-4 mb-4">
@@ -210,7 +221,7 @@ export function VendorDetailClient({
             </Card>
             <Card
               className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/30 hover:scale-[1.02]"
-              onClick={handleAICall}
+              onClick={() => handleCreateTicket("call")}
             >
               <CardContent className="flex flex-col items-center p-6 text-center">
                 <div className="rounded-xl bg-primary/10 p-4 mb-4">
@@ -255,7 +266,7 @@ export function VendorDetailClient({
               <Button
                 size="lg"
                 className="w-full"
-                onClick={handleHumanHelp}
+                onClick={() => handleCreateTicket("chat")}
               >
                 Start Support Request
                 <ArrowRight className="ml-2 h-4 w-4" />
