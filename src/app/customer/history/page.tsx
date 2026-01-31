@@ -1,42 +1,57 @@
 "use client";
 
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, ArrowRight } from "lucide-react";
+import { Search, ArrowRight, Loader2, History } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useAuthStore } from "@/stores/auth-store";
+import { useState, useMemo } from "react";
+import { format } from "date-fns";
+import Link from "next/link";
 
 const ticketStatusColor: Record<string, string> = {
-  resolved: "bg-sage-500/20 text-sage-900",
+  resolved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
   closed: "bg-muted text-muted-foreground",
 };
 
-const mockHistory = [
-  {
-    id: "TKT-0998",
-    subject: "Account login issues",
-    status: "closed",
-    date: "Jan 15, 2024",
-  },
-  {
-    id: "TKT-0892",
-    subject: "Billing inquiry",
-    status: "closed",
-    date: "Dec 28, 2023",
-  },
-  {
-    id: "TKT-0756",
-    subject: "Feature request",
-    status: "resolved",
-    date: "Dec 10, 2023",
-  },
-  {
-    id: "TKT-0654",
-    subject: "Integration help",
-    status: "closed",
-    date: "Nov 22, 2023",
-  },
-];
-
 export default function CustomerHistory() {
+  const { user } = useAuthStore();
+  const [search, setSearch] = useState("");
+
+  const tickets = useQuery(
+    api.functions.tickets.listByCustomer,
+    user?.id ? { customerId: user.id as Id<"users"> } : "skip",
+  );
+
+  // filter for closed/resolved tickets
+  const historyTickets = useMemo(() => {
+    if (!tickets) return [];
+    return tickets.filter(
+      (t) => t.status === "closed" || t.status === "resolved",
+    );
+  }, [tickets]);
+
+  // search filter
+  const filteredTickets = useMemo(() => {
+    if (!search) return historyTickets;
+    const lower = search.toLowerCase();
+    return historyTickets.filter(
+      (t) =>
+        t.subject.toLowerCase().includes(lower) ||
+        t._id.toLowerCase().includes(lower),
+    );
+  }, [historyTickets, search]);
+
+  if (tickets === undefined) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -46,35 +61,52 @@ export default function CustomerHistory() {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search tickets..." className="pl-9" />
+        <Input
+          placeholder="Search tickets..."
+          className="pl-9"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      <div className="space-y-3">
-        {mockHistory.map((ticket) => (
-          <Card
-            key={ticket.id}
-            className="cursor-pointer transition-all hover:shadow-soft"
-          >
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm text-muted-foreground">
-                    {ticket.id}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${ticketStatusColor[ticket.status]}`}
-                  >
-                    {ticket.status}
-                  </span>
-                </div>
-                <p className="font-medium">{ticket.subject}</p>
-                <p className="text-sm text-muted-foreground">{ticket.date}</p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {filteredTickets.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <History className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              {search ? "No tickets match your search" : "No ticket history"}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filteredTickets.map((ticket) => (
+            <Link key={ticket._id} href={`/customer/tickets/${ticket._id}`}>
+              <Card className="cursor-pointer transition-all hover:shadow-soft">
+                <CardContent className="flex items-center justify-between p-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm text-muted-foreground">
+                        {ticket._id.slice(-8).toUpperCase()}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${ticketStatusColor[ticket.status] || "bg-muted"}`}
+                      >
+                        {ticket.status}
+                      </span>
+                    </div>
+                    <p className="font-medium">{ticket.subject}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(ticket.createdAt), "MMM d, yyyy")}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

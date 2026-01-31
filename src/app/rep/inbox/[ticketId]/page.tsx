@@ -22,6 +22,7 @@ import {
   TicketStatus,
 } from "@/components/tickets/ticket-status-badge";
 import { ChatInterface } from "@/components/chat/chat-interface";
+import { AIContextPanel } from "@/components/tickets/ai-context-panel";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
@@ -268,6 +269,13 @@ export default function RepTicketPage() {
 
         {/* context panel */}
         <div className="space-y-4">
+          {/* AI context */}
+          <AIContextPanel
+            ticketId={ticketId}
+            ticketSubject={ticket.subject}
+            messages={[]}
+          />
+
           {/* customer info */}
           <Card>
             <CardHeader className="pb-2">

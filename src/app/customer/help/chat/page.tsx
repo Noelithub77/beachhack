@@ -1,39 +1,66 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { useAuthStore } from "@/stores/auth-store";
+import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 
 export default function CustomerChat() {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      role: "ai",
-      content:
-        "Hi! I'm SAGE, your AI support assistant. How can I help you today?",
-    },
-  ]);
+  const { user } = useAuthStore();
+  const [input, setInput] = useState("");
 
-  const handleSend = () => {
-    if (!message.trim()) return;
-    setMessages((prev) => [...prev, { role: "user", content: message }]);
-    setMessage("");
-    // AI response would stream here
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "ai",
-          content:
-            "I understand you need help. Let me look into that for you...",
-        },
-      ]);
-    }, 1000);
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: { userId: user?.id },
+      }),
+    [user?.id],
+  );
+
+  const { messages, sendMessage, status } = useChat({ transport });
+
+  const isLoading = status === "streaming" || status === "submitted";
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim()) {
+      sendMessage({ text: input });
+      setInput("");
+    }
   };
+
+  // extract text from message parts
+  const getMessageText = (msg: (typeof messages)[0]): string => {
+    if ("content" in msg && msg.content) return String(msg.content);
+    return (
+      msg.parts
+        ?.filter((p) => p.type === "text")
+        .map((p) => (p as { type: "text"; text: string }).text)
+        .join("") || ""
+    );
+  };
+
+  // add welcome message if no messages yet
+  const displayMessages: { id: string; role: string; text: string }[] =
+    messages.length === 0
+      ? [
+          {
+            id: "welcome",
+            role: "assistant",
+            text: "Hi! I'm SAGE, your AI support assistant. How can I help you today?",
+          },
+        ]
+      : messages.map((m) => ({
+          id: m.id,
+          role: m.role,
+          text: getMessageText(m) || "",
+        }));
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
@@ -59,46 +86,50 @@ export default function CustomerChat() {
 
       {/* messages */}
       <div className="flex-1 space-y-4 overflow-y-auto py-4">
-        {messages.map((msg, i) => (
+        {displayMessages.map((msg) => (
           <div
-            key={i}
-            className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+            key={msg.id}
+            className={cn(
+              "flex w-full max-w-[95%] flex-col gap-2",
+              msg.role === "user" ? "ml-auto items-end" : "items-start",
+            )}
           >
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarFallback
-                className={
-                  msg.role === "ai" ? "bg-primary/10 text-primary" : "bg-muted"
-                }
-              >
-                {msg.role === "ai" ? "S" : "U"}
-              </AvatarFallback>
-            </Avatar>
-            <Card
-              className={`max-w-[80%] ${msg.role === "user" ? "bg-primary text-primary-foreground" : ""}`}
+            <div
+              className={cn(
+                "rounded-lg px-4 py-3 text-sm",
+                msg.role === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted",
+              )}
             >
-              <CardContent className="p-3">
-                <p className="text-sm">{msg.content}</p>
-              </CardContent>
-            </Card>
+              {msg.text}
+            </div>
           </div>
         ))}
+        {isLoading && (
+          <div className="flex items-start gap-2">
+            <div className="rounded-lg bg-muted px-4 py-3">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* input */}
-      <div className="border-t pt-4">
+      <form onSubmit={handleSubmit} className="border-t pt-4">
         <div className="flex gap-2">
           <Input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
             className="flex-1"
+            disabled={isLoading}
           />
-          <Button onClick={handleSend} size="icon">
+          <Button type="submit" size="icon" disabled={isLoading || !input}>
             <Send className="h-4 w-4" />
           </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
