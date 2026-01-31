@@ -28,12 +28,12 @@ export const seed = mutation({
 
         // seed users - password is just "password" for demo
         const users = [
-            { email: "customer@coco.com", name: "Alex Customer", role: "customer" as const, vendorId: undefined },
+            { email: "sarahmariamsunil@gmail.com", name: "Sarah Mariam Sunil", role: "customer" as const, vendorId: undefined },
             { email: "customer2@coco.com", name: "Jordan Buyer", role: "customer" as const, vendorId: undefined },
-            { email: "rep.l1@coco.com", name: "Sam Support L1", role: "rep_l1" as const, vendorId: vendorCoco },
-            { email: "rep.l2@coco.com", name: "Taylor Support L2", role: "rep_l2" as const, vendorId: vendorCoco },
+            { email: "rep.l1@coco.com", name: "Srimoney", role: "rep_l1" as const, vendorId: vendorCoco },
+            { email: "rep.l2@coco.com", name: "Nidhi R", role: "rep_l2" as const, vendorId: vendorCoco },
             { email: "rep.l3@coco.com", name: "Morgan Expert L3", role: "rep_l3" as const, vendorId: vendorCoco },
-            { email: "admin.manager@coco.com", name: "Casey Manager", role: "admin_manager" as const, vendorId: vendorCoco },
+            { email: "admin.manager@coco.com", name: "Noel Georgi", role: "admin_manager" as const, vendorId: vendorCoco },
             { email: "admin.senior@coco.com", name: "Riley Senior Admin", role: "admin_senior" as const, vendorId: vendorCoco },
             { email: "super@coco.com", name: "Super Admin", role: "admin_super" as const, vendorId: vendorCoco },
         ];
