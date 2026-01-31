@@ -37,7 +37,7 @@ Create a handoff summary that includes:
 Format as markdown with clear sections.`;
 
     const result = await generateText({
-        model: google("gemini-2.5-flash"),
+        model: google("gemini-2.5-flash-lite"),
         prompt,
     });
 

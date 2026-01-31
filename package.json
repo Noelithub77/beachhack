@@ -9,7 +9,8 @@
     "lint": "eslint",
     "seed": "tsx scripts/seed.ts",
     "seed-foodstory": "tsx scripts/seed-foodstory.ts",
-    "memories": "tsx scripts/manage-memories.ts"
+    "memories": "tsx scripts/manage-memories.ts",
+    "seed-customer-care": "tsx scripts/seed-customer-care-memories.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.18",

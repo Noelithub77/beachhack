@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         const contextStr = memories.join("\n---\n");
 
         const { text } = await generateText({
-            model: google("gemini-2.5-flash"),
+            model: google("gemini-2.5-flash-lite"),
             system: `You are a helpful support assistant providing real-time suggestions to a customer service representative during a live call.
 Based on the customer's speech and their previous interaction history, provide a brief, actionable suggestion.
 Keep suggestions concise (1-2 sentences max). Focus on relevant facts from history that help address the current topic.

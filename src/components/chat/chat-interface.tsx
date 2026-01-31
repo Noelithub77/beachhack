@@ -53,7 +53,8 @@ export function ChatInterface({
     const lastMessage = messages[messages.length - 1];
     return (
       waitingForAI &&
-      (lastMessage.senderType === "customer" || lastMessage.senderType === "rep")
+      (lastMessage.senderType === "customer" ||
+        lastMessage.senderType === "rep")
     );
   }, [messages, waitingForAI]);
 
@@ -82,17 +83,53 @@ export function ChatInterface({
     setWaitingForAI(true);
     try {
       const senderType = user.role === "customer" ? "customer" : "rep";
-      await sendMessage({
+      const result = await sendMessage({
         conversationId,
         senderId: user.id as Id<"users">,
         senderType,
         content: message.trim(),
       });
       setMessage("");
+
+      // trigger AI processing every 2 messages
+      if (result.shouldProcess && result.ticketId) {
+        triggerAiProcessing(result.ticketId);
+      }
     } catch (error) {
       setWaitingForAI(false);
     } finally {
       setSending(false);
+    }
+  };
+
+  // process ticket with AI (fire and forget)
+  const triggerAiProcessing = async (tid: Id<"tickets">) => {
+    try {
+      const content = await fetch(
+        `/api/convex/ticket-content?ticketId=${tid}`,
+      ).then((r) => r.json());
+      if (!content || content.length === 0) return;
+
+      const analysis = await fetch("/api/ai/process-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticketId: tid, conversation: content }),
+      }).then((r) => r.json());
+
+      if (analysis.success && analysis.analysis) {
+        await fetch("/api/ai/apply-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ticketId: tid,
+            vendorId: user?.vendorId,
+            userId: user?.id,
+            analysis: analysis.analysis,
+          }),
+        });
+      }
+    } catch (err) {
+      console.error("[AI Processing] Error:", err);
     }
   };
 
@@ -144,11 +181,11 @@ export function ChatInterface({
                     "max-w-[80%] rounded-2xl px-4 py-2",
                     isSystem && "bg-muted text-muted-foreground text-sm italic",
                     isAi &&
-                    "bg-primary/10 text-foreground border border-primary/20",
+                      "bg-primary/10 text-foreground border border-primary/20",
                     !isSystem &&
-                    !isAi &&
-                    isOwn &&
-                    "bg-primary text-primary-foreground",
+                      !isAi &&
+                      isOwn &&
+                      "bg-primary text-primary-foreground",
                     !isSystem && !isAi && !isOwn && "bg-muted text-foreground",
                   )}
                 >
@@ -188,7 +225,10 @@ export function ChatInterface({
           <Button
             onClick={handleSend}
             disabled={isLoading || !message.trim()}
-            className={cn(isLoading && "[animation:spin_1s_linear_infinite] scale-[0.8] aspect-square p-2")}
+            className={cn(
+              isLoading &&
+                "[animation:spin_1s_linear_infinite] scale-[0.8] aspect-square p-2",
+            )}
           >
             {!isLoading && <Send className="h-4 w-4" />}
           </Button>
@@ -197,4 +237,3 @@ export function ChatInterface({
     </div>
   );
 }
-

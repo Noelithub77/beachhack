@@ -39,6 +39,26 @@ RESPONSE FORMAT:
 
 Remember: You're building a relationship, not just solving tickets.`;
 
+interface SaveContentRequest {
+    ticketId: string;
+    source: "ai_message";
+    role: "user" | "assistant";
+    content: string;
+    speakerId?: string;
+}
+
+async function saveToTicketContent(
+    baseUrl: string,
+    data: SaveContentRequest
+): Promise<void> {
+    // fire and forget - don't block the response
+    fetch(`${baseUrl}/api/convex/ticket-content`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    }).catch((err) => console.error("[Chat] Failed to save content:", err));
+}
+
 export async function POST(req: Request) {
     try {
         const body = await req.json();
@@ -46,12 +66,14 @@ export async function POST(req: Request) {
             messages,
             userId,
             ticketId,
+            vendorId,
             vendorName,
             vendorContext,
         }: {
             messages: UIMessage[];
             userId?: string;
             ticketId?: string;
+            vendorId?: string;
             vendorName?: string;
             vendorContext?: string;
         } = body;
@@ -70,7 +92,7 @@ export async function POST(req: Request) {
             contextPrompt += `\n\nACTIVE TICKET: ${ticketId}`;
         }
 
-        const baseModel = google("gemini-2.5-flash");
+        const baseModel = google("gemini-2.5-flash-lite");
 
         // withSupermemory automatically:
         // 1. Retrieves relevant memories and injects them into context
@@ -80,7 +102,7 @@ export async function POST(req: Request) {
             ? withSupermemory(baseModel, userId, {
                 conversationId: ticketId || undefined,
                 addMemory: "always",
-                mode: "full", // uses both profile and query for rich context
+                mode: "full",
                 apiKey: process.env.SUPERMEMORY_API_KEY,
             })
             : baseModel;

@@ -22,6 +22,7 @@ import type * as functions_messages from "../functions/messages.js";
 import type * as functions_queues from "../functions/queues.js";
 import type * as functions_storage from "../functions/storage.js";
 import type * as functions_tasks from "../functions/tasks.js";
+import type * as functions_ticketContent from "../functions/ticketContent.js";
 import type * as functions_tickets from "../functions/tickets.js";
 import type * as functions_transcripts from "../functions/transcripts.js";
 import type * as functions_users from "../functions/users.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   "functions/queues": typeof functions_queues;
   "functions/storage": typeof functions_storage;
   "functions/tasks": typeof functions_tasks;
+  "functions/ticketContent": typeof functions_ticketContent;
   "functions/tickets": typeof functions_tickets;
   "functions/transcripts": typeof functions_transcripts;
   "functions/users": typeof functions_users;

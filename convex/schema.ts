@@ -30,6 +30,7 @@ const channel = v.union(
   v.literal("call"),
   v.literal("email"),
   v.literal("docs"),
+  v.literal("ai_chat"),
 );
 
 const priority = v.union(
@@ -173,14 +174,32 @@ export default defineSchema({
     timestamp: v.number(),
   }).index("by_call", ["callSessionId"]),
 
-  // AI-curated context
+  // unified ticket content from all sources
+  ticketContent: defineTable({
+    ticketId: v.id("tickets"),
+    source: v.union(
+      v.literal("chat_message"),
+      v.literal("ai_message"),
+      v.literal("voice_transcript"),
+      v.literal("system"),
+    ),
+    role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+    content: v.string(),
+    speakerId: v.optional(v.id("users")),
+    timestamp: v.number(),
+  }).index("by_ticket", ["ticketId"]),
+
+  // AI-curated context with versioning
   contextSummaries: defineTable({
     ticketId: v.id("tickets"),
+    version: v.number(),
+    title: v.string(),
     summary: v.string(),
     confirmedFacts: v.array(v.string()),
     inferredSignals: v.array(v.string()),
     unknowns: v.array(v.string()),
     actionsTaken: v.array(v.string()),
+    sentiment: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_ticket", ["ticketId"]),
@@ -219,9 +238,12 @@ export default defineSchema({
     ),
     dueAt: v.optional(v.number()),
     createdAt: v.number(),
+    sourceTicketId: v.optional(v.id("tickets")),
+    aiGenerated: v.optional(v.boolean()),
   })
     .index("by_assignee", ["assigneeId"])
-    .index("by_vendor", ["vendorId"]),
+    .index("by_vendor", ["vendorId"])
+    .index("by_ticket", ["sourceTicketId"]),
 
   // calendar/scheduling
   calendarEvents: defineTable({
@@ -231,7 +253,10 @@ export default defineSchema({
     type: v.union(v.literal("shift"), v.literal("meeting"), v.literal("other")),
     startAt: v.number(),
     endAt: v.number(),
+    sourceTicketId: v.optional(v.id("tickets")),
+    aiGenerated: v.optional(v.boolean()),
   })
     .index("by_user", ["userId"])
-    .index("by_vendor", ["vendorId"]),
+    .index("by_vendor", ["vendorId"])
+    .index("by_ticket", ["sourceTicketId"]),
 });

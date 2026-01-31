@@ -137,15 +137,51 @@ export function AIChatInterface({
     setInput("");
 
     // save user message to convex
-    await saveMessage({
+    const result = await saveMessage({
       conversationId,
       senderId: user.id as Id<"users">,
       senderType: "customer",
       content: text,
     });
 
+    // trigger AI processing every 2 messages
+    if (result.shouldProcess && result.ticketId) {
+      triggerAiProcessing(result.ticketId);
+    }
+
     // submit to AI
     sendMessage({ text });
+  };
+
+  // process ticket with AI (fire and forget)
+  const triggerAiProcessing = async (tid: Id<"tickets">) => {
+    try {
+      const content = await fetch(
+        `/api/convex/ticket-content?ticketId=${tid}`,
+      ).then((r) => r.json());
+      if (!content || content.length === 0) return;
+
+      const analysis = await fetch("/api/ai/process-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticketId: tid, conversation: content }),
+      }).then((r) => r.json());
+
+      if (analysis.success && analysis.analysis) {
+        await fetch("/api/ai/apply-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ticketId: tid,
+            vendorId: user?.vendorId,
+            userId: user?.id,
+            analysis: analysis.analysis,
+          }),
+        });
+      }
+    } catch (err) {
+      console.error("[AI Processing] Error:", err);
+    }
   };
 
   const isLoading = status === "submitted" || status === "streaming";
