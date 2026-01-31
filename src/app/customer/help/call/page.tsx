@@ -39,6 +39,9 @@ export default function CallPage() {
   const [mode, setMode] = useState<CallMode>("idle");
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [currentTicketId, setCurrentTicketId] = useState<string | null>(null);
+  const [currentCallSessionId, setCurrentCallSessionId] = useState<
+    string | null
+  >(null);
 
   const vendorId = searchParams.get("vendor");
 
@@ -96,6 +99,7 @@ export default function CallPage() {
     }
 
     setCurrentTicketId(result.ticketId);
+    setCurrentCallSessionId(result.callSessionId);
 
     // start ElevenLabs conversation with context
     const convId = await conversation.startConversation({
@@ -117,16 +121,47 @@ export default function CallPage() {
     await conversation.endConversation();
     endCall();
 
-    if (currentTicketId) {
+    // sync transcripts to memory before clearing
+    if (user?.id && transcripts.length > 0) {
+      try {
+        await fetch("/api/memory/sync-transcript", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            ticketId: currentTicketId,
+            vendorName: vendor?.name,
+            transcripts: transcripts.map((t) => ({
+              speaker: t.speaker,
+              text: t.text,
+            })),
+          }),
+        });
+      } catch (error) {
+        console.error("[Call] Transcript sync error:", error);
+      }
+    }
+
+    if (currentCallSessionId) {
       await endCallSession({
-        callSessionId: currentTicketId as Id<"callSessions">,
+        callSessionId: currentCallSessionId as Id<"callSessions">,
       });
     }
 
     setMode("idle");
     setTranscripts([]);
     setCurrentTicketId(null);
-  }, [conversation, endCall, currentTicketId, endCallSession]);
+    setCurrentCallSessionId(null);
+  }, [
+    conversation,
+    endCall,
+    currentCallSessionId,
+    endCallSession,
+    user,
+    transcripts,
+    currentTicketId,
+    vendor,
+  ]);
 
   // vendor not selected
   if (!vendorId) {
@@ -318,10 +353,8 @@ export default function CallPage() {
           </Card>
         )}
 
-        {/* transcription panel */}
-        {transcripts.length > 0 && (
-          <TranscriptionPanel transcripts={transcripts} />
-        )}
+        {/* live transcription panel - always visible during call */}
+        {mode === "active" && <TranscriptionPanel transcripts={transcripts} />}
       </div>
     </div>
   );

@@ -221,6 +221,9 @@ importers:
       streamdown:
         specifier: ^2.1.0
         version: 2.1.0(react@19.2.3)
+      supermemory:
+        specifier: ^4.0.0
+        version: 4.0.0
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
@@ -6654,6 +6657,9 @@ packages:
 
   supermemory@3.14.0:
     resolution: {integrity: sha512-gy1C6B4wUHEIOjmvDqW6GRttEdr0TZFFZ2YVU5eTCXELPQ0zjxgwudmg2kLPI6dEIITUxw1Q6n1c+vm4ro0KSg==}
+
+  supermemory@4.0.0:
+    resolution: {integrity: sha512-xMN05PQ8kTv8DuXa2qf8h/9LaRI7v1Kz3Tutt97JPq+PzhGabKLv5YVbSgqHiPX5yXcSUBVBNYPPbhAQMF6GYQ==}
 
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
@@ -14871,6 +14877,8 @@ snapshots:
       ts-interface-checker: 0.1.13
 
   supermemory@3.14.0: {}
+
+  supermemory@4.0.0: {}
 
   supports-color@5.5.0:
     dependencies:
