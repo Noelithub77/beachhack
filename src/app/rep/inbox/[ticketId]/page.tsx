@@ -21,6 +21,7 @@ import {
   MessageCircle,
   Mail,
   Sparkles,
+  PhoneOutgoing,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -41,6 +42,14 @@ import {
 import { CallTimer } from "@/components/call/call-timer";
 import { useCallStore } from "@/stores/call-store";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function RepTicketPage() {
   const params = useParams();
@@ -52,11 +61,18 @@ export default function RepTicketPage() {
   const conversation = useQuery(api.functions.conversations.getByTicket, {
     ticketId,
   });
+  const outboundCalls = useQuery(api.functions.outboundCalls.getByTicket, {
+    ticketId,
+  });
   const createConversation = useMutation(api.functions.conversations.create);
   const assignTicket = useMutation(api.functions.tickets.assign);
   const updateStatus = useMutation(api.functions.tickets.updateStatus);
   const escalateTicket = useMutation(api.functions.tickets.escalate);
   const saveTranscript = useMutation(api.functions.messages.send);
+  const createOutboundCall = useMutation(api.functions.outboundCalls.create);
+  const updateOutboundCall = useMutation(
+    api.functions.outboundCalls.updateFromElevenLabs,
+  );
 
   const [creatingConversation, setCreatingConversation] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -64,6 +80,8 @@ export default function RepTicketPage() {
   const { callStartTime, startCall, endCall } = useCallStore();
   const [justUpdated, setJustUpdated] = useState(false);
   const [prevSubject, setPrevSubject] = useState("");
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const [initiatingCall, setInitiatingCall] = useState(false);
 
   useEffect(() => {
     if (ticket && ticket.subject !== prevSubject) {
@@ -187,6 +205,59 @@ export default function RepTicketPage() {
       setLoading(null);
     }
   };
+
+  const handleOutboundCall = async () => {
+    if (!ticket?.customer?.phoneNumber) return;
+    setInitiatingCall(true);
+    try {
+      // create call record in convex
+      const { callId } = await createOutboundCall({
+        ticketId,
+        customerId: ticket.customerId,
+        phoneNumber: ticket.customer.phoneNumber,
+      });
+
+      // initiate call via ElevenLabs API
+      const response = await fetch("/api/elevenlabs/outbound-call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toNumber: ticket.customer.phoneNumber,
+          vendorName: ticket.vendor?.name,
+          userName: ticket.customer.name,
+          userId: ticket.customerId,
+          ticketId,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.conversationId) {
+        await updateOutboundCall({
+          callId,
+          conversationId: data.conversationId,
+          callSid: data.callSid,
+          status: "ringing",
+        });
+        setCallDialogOpen(false);
+        router.push(`/rep/inbox/${ticketId}/call/${callId}`);
+      } else {
+        await updateOutboundCall({ callId, status: "failed" });
+        alert(data.error || "Failed to initiate call");
+      }
+    } catch (error) {
+      console.error("Outbound call error:", error);
+      alert("Failed to initiate call");
+    } finally {
+      setInitiatingCall(false);
+    }
+  };
+
+  const activeOutboundCall = outboundCalls?.find(
+    (c) =>
+      c.status === "initiating" ||
+      c.status === "ringing" ||
+      c.status === "in_progress",
+  );
 
   if (ticket === undefined || conversation === undefined) {
     return (
@@ -508,18 +579,75 @@ export default function RepTicketPage() {
             </span>
           </div>
           {ticket.customer ? (
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-full bg-[#6f8551]/10 flex items-center justify-center shrink-0">
-                <User className="h-3.5 w-3.5 text-[#6f8551]" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-full bg-[#6f8551]/10 flex items-center justify-center shrink-0">
+                  <User className="h-3.5 w-3.5 text-[#6f8551]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-[#2D3E2F] truncate">
+                    {ticket.customer.name}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {ticket.customer.email}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-[#2D3E2F] truncate">
-                  {ticket.customer.name}
-                </p>
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {ticket.customer.email}
-                </p>
-              </div>
+              {ticket.customer.phoneNumber && (
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <Phone className="h-3 w-3" />
+                  <span>{ticket.customer.phoneNumber}</span>
+                </div>
+              )}
+              {ticket.customer.phoneNumber && isAssignedToMe && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-7 text-xs gap-1.5"
+                  onClick={() => setCallDialogOpen(true)}
+                  disabled={!!activeOutboundCall}
+                >
+                  {activeOutboundCall ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Call in progress...
+                    </>
+                  ) : (
+                    <>
+                      <PhoneOutgoing className="h-3 w-3" />
+                      Call Customer
+                    </>
+                  )}
+                </Button>
+              )}
+              {activeOutboundCall && (
+                <Link
+                  href={`/rep/inbox/${ticketId}/call/${activeOutboundCall._id}`}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full h-6 text-[10px]"
+                  >
+                    View active call
+                  </Button>
+                </Link>
+              )}
+              {outboundCalls &&
+                outboundCalls.length > 0 &&
+                !activeOutboundCall && (
+                  <Link
+                    href={`/rep/inbox/${ticketId}/call/${outboundCalls[0]._id}`}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-6 text-[10px] text-muted-foreground"
+                    >
+                      View last call
+                    </Button>
+                  </Link>
+                )}
             </div>
           ) : (
             <p className="text-[10px] text-muted-foreground">
@@ -568,6 +696,63 @@ export default function RepTicketPage() {
           </div>
         </div>
       </div>
+
+      {/* Call confirmation dialog */}
+      <Dialog open={callDialogOpen} onOpenChange={setCallDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Call Customer</DialogTitle>
+            <DialogDescription>
+              An AI agent will call the customer to gather information about
+              their issue.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="h-10 w-10 rounded-full bg-[#6f8551]/10 flex items-center justify-center">
+                <User className="h-5 w-5 text-[#6f8551]" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">{ticket.customer?.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {ticket.customer?.phoneNumber}
+                </p>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>The AI agent will:</p>
+              <ul className="list-disc list-inside pl-2 space-y-0.5">
+                <li>Introduce itself as SAGE support assistant</li>
+                <li>Gather details about the customer's issue</li>
+                <li>Record the conversation transcript</li>
+                <li>Provide a summary after the call</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCallDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleOutboundCall}
+              disabled={initiatingCall}
+              className="bg-[#6f8551] hover:bg-[#5a6d42]"
+            >
+              {initiatingCall ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Initiating...
+                </>
+              ) : (
+                <>
+                  <PhoneOutgoing className="h-4 w-4 mr-2" />
+                  Start Call
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

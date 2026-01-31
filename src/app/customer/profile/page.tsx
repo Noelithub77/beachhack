@@ -29,7 +29,24 @@ export default function CustomerProfile() {
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState(user?.name ?? "");
   const [editPhone, setEditPhone] = useState(user?.phoneNumber ?? "");
+  const [phoneError, setPhoneError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // E.164 format validation
+  const validatePhone = (phone: string): boolean => {
+    if (!phone) return true; // optional field
+    const e164Regex = /^\+[1-9]\d{6,14}$/;
+    return e164Regex.test(phone.replace(/\s/g, ""));
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setEditPhone(value);
+    if (value && !validatePhone(value)) {
+      setPhoneError("Use E.164 format: +[country code][number]");
+    } else {
+      setPhoneError("");
+    }
+  };
 
   const initials =
     user?.name
@@ -41,14 +58,26 @@ export default function CustomerProfile() {
 
   const handleSave = async () => {
     if (!user?.id) return;
+    if (editPhone && !validatePhone(editPhone)) {
+      setPhoneError("Please enter a valid phone number");
+      return;
+    }
     setSaving(true);
     try {
+      // normalize phone to E.164 (remove spaces)
+      const normalizedPhone = editPhone
+        ? editPhone.replace(/\s/g, "")
+        : undefined;
       await updateProfile({
         userId: user.id as Id<"users">,
         name: editName || undefined,
-        phoneNumber: editPhone || undefined,
+        phoneNumber: normalizedPhone,
       });
-      setUser({ ...user, name: editName || user.name, phoneNumber: editPhone });
+      setUser({
+        ...user,
+        name: editName || user.name,
+        phoneNumber: normalizedPhone,
+      });
       setEditOpen(false);
     } finally {
       setSaving(false);
@@ -122,9 +151,16 @@ export default function CustomerProfile() {
                   <Input
                     id="phone"
                     value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    placeholder="+1 234 567 8900"
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    placeholder="+12345678900"
+                    className={phoneError ? "border-red-500" : ""}
                   />
+                  <p className="text-[10px] text-muted-foreground">
+                    E.164 format: +[country code][number] (e.g., +12025551234)
+                  </p>
+                  {phoneError && (
+                    <p className="text-xs text-red-500">{phoneError}</p>
+                  )}
                 </div>
                 <Button
                   onClick={handleSave}

@@ -19,6 +19,7 @@ import type * as functions_feedback from "../functions/feedback.js";
 import type * as functions_manage_reset from "../functions/manage/reset.js";
 import type * as functions_manage_seed from "../functions/manage/seed.js";
 import type * as functions_messages from "../functions/messages.js";
+import type * as functions_outboundCalls from "../functions/outboundCalls.js";
 import type * as functions_queues from "../functions/queues.js";
 import type * as functions_storage from "../functions/storage.js";
 import type * as functions_tasks from "../functions/tasks.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   "functions/manage/reset": typeof functions_manage_reset;
   "functions/manage/seed": typeof functions_manage_seed;
   "functions/messages": typeof functions_messages;
+  "functions/outboundCalls": typeof functions_outboundCalls;
   "functions/queues": typeof functions_queues;
   "functions/storage": typeof functions_storage;
   "functions/tasks": typeof functions_tasks;
