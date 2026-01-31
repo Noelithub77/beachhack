@@ -46,7 +46,13 @@ export function ChatInterface({
   const messages = useQuery(api.functions.messages.listByConversation, {
     conversationId,
   });
+  const ticket = useQuery(api.functions.tickets.get, { ticketId });
   const sendMessage = useMutation(api.functions.messages.send);
+
+  // logic: only show AI indicators if user is customer and no rep is assigned yet
+  const isRepAssigned = !!ticket?.assignedRepId;
+  const isCustomer = user?.role === "customer";
+  const showAiIndicators = isCustomer && !isRepAssigned;
 
   // Check if the last message is from the user (waiting for AI response)
   const isWaitingForResponse = useMemo(() => {
@@ -184,11 +190,11 @@ export function ChatInterface({
                     "max-w-[80%] rounded-2xl px-4 py-2",
                     isSystem && "bg-muted text-muted-foreground text-sm italic",
                     isAi &&
-                      "bg-primary/10 text-foreground border border-primary/20",
+                    "bg-primary/10 text-foreground border border-primary/20",
                     !isSystem &&
-                      !isAi &&
-                      isOwn &&
-                      "bg-primary text-primary-foreground",
+                    !isAi &&
+                    isOwn &&
+                    "bg-primary text-primary-foreground",
                     !isSystem && !isAi && !isOwn && "bg-muted text-foreground",
                   )}
                 >
@@ -211,12 +217,12 @@ export function ChatInterface({
           })
         )}
         {/* AI Typing Indicator */}
-        {isWaitingForResponse && <TypingIndicator />}
+        {isWaitingForResponse && showAiIndicators && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
 
       {/* AI Analysis Status */}
-      {isAnalyzing && (
+      {isAnalyzing && showAiIndicators && (
         <div className="px-4 py-1.5 bg-primary/5 border-t border-primary/10 animate-in slide-in-from-bottom-2 flex items-center gap-2">
           <Sparkles className="h-3 w-3 text-primary animate-pulse" />
           <span className="text-[10px] font-medium text-primary/70 uppercase tracking-wider">
@@ -239,11 +245,12 @@ export function ChatInterface({
             onClick={handleSend}
             disabled={isLoading || !message.trim()}
             className={cn(
-              isLoading &&
-                "[animation:spin_1s_linear_infinite] scale-[0.8] aspect-square p-2",
+              isLoading && showAiIndicators &&
+              "[animation:spin_1s_linear_infinite] scale-[0.8] aspect-square p-2",
             )}
           >
-            {!isLoading && <Send className="h-4 w-4" />}
+            {(!isLoading || !showAiIndicators) && <Send className="h-4 w-4" />}
+            {isLoading && showAiIndicators && <Loader2 className="h-4 w-4" />}
           </Button>
         </div>
       </div>
