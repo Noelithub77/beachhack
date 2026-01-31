@@ -21,6 +21,10 @@ export const seed = mutation({
         const vendorCoco = await ctx.db.insert("vendors", {
             name: "COCO Support",
             primaryColor: "#6F8551",
+            category: "Technology",
+            description: "Premium customer support platform for modern businesses",
+            supportEmail: "support@coco.com",
+            slaResponseHours: 4,
             isActive: true,
             createdAt: now,
         });
@@ -28,6 +32,35 @@ export const seed = mutation({
         const vendorAcme = await ctx.db.insert("vendors", {
             name: "Acme Corp",
             primaryColor: "#3B82F6",
+            category: "Technology",
+            description: "Enterprise solutions and cloud services",
+            supportEmail: "help@acme.corp",
+            supportPhone: "+1-800-ACME",
+            website: "https://acme.corp",
+            slaResponseHours: 8,
+            isActive: true,
+            createdAt: now,
+        });
+
+        const vendorHealthPlus = await ctx.db.insert("vendors", {
+            name: "HealthPlus Insurance",
+            primaryColor: "#10B981",
+            category: "Healthcare",
+            description: "Comprehensive health insurance coverage",
+            supportEmail: "claims@healthplus.com",
+            supportPhone: "+1-888-HEALTH",
+            slaResponseHours: 24,
+            isActive: true,
+            createdAt: now,
+        });
+
+        const vendorFinanceHub = await ctx.db.insert("vendors", {
+            name: "FinanceHub",
+            primaryColor: "#F59E0B",
+            category: "Finance",
+            description: "Personal and business banking services",
+            supportEmail: "support@financehub.com",
+            slaResponseHours: 2,
             isActive: true,
             createdAt: now,
         });
@@ -91,7 +124,7 @@ export const seed = mutation({
             success: true,
             message: "Seeded successfully",
             data: {
-                vendors: 2,
+                vendors: 4,
                 users: users.length,
                 tickets: 1,
             },

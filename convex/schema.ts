@@ -9,7 +9,7 @@ const userRole = v.union(
   v.literal("rep_l3"),
   v.literal("admin_manager"),
   v.literal("admin_senior"),
-  v.literal("admin_super")
+  v.literal("admin_super"),
 );
 
 const ticketStatus = v.union(
@@ -22,21 +22,21 @@ const ticketStatus = v.union(
   v.literal("escalated"),
   v.literal("resolved"),
   v.literal("closed"),
-  v.literal("reopened")
+  v.literal("reopened"),
 );
 
 const channel = v.union(
   v.literal("chat"),
   v.literal("call"),
   v.literal("email"),
-  v.literal("docs")
+  v.literal("docs"),
 );
 
 const priority = v.union(
   v.literal("low"),
   v.literal("medium"),
   v.literal("high"),
-  v.literal("urgent")
+  v.literal("urgent"),
 );
 
 export default defineSchema({
@@ -114,7 +114,12 @@ export default defineSchema({
   messages: defineTable({
     conversationId: v.id("conversations"),
     senderId: v.optional(v.id("users")),
-    senderType: v.union(v.literal("customer"), v.literal("rep"), v.literal("ai"), v.literal("system")),
+    senderType: v.union(
+      v.literal("customer"),
+      v.literal("rep"),
+      v.literal("ai"),
+      v.literal("system"),
+    ),
     content: v.string(),
     createdAt: v.number(),
   }).index("by_conversation", ["conversationId"]),
@@ -125,7 +130,11 @@ export default defineSchema({
     callerId: v.id("users"),
     receiverId: v.optional(v.id("users")),
     twilioSid: v.optional(v.string()),
-    status: v.union(v.literal("ringing"), v.literal("in_progress"), v.literal("ended")),
+    status: v.union(
+      v.literal("ringing"),
+      v.literal("in_progress"),
+      v.literal("ended"),
+    ),
     startedAt: v.number(),
     endedAt: v.optional(v.number()),
     recordingUrl: v.optional(v.string()),
@@ -137,7 +146,11 @@ export default defineSchema({
   transcripts: defineTable({
     callSessionId: v.id("callSessions"),
     speakerId: v.optional(v.id("users")),
-    speakerType: v.union(v.literal("customer"), v.literal("rep"), v.literal("ai")),
+    speakerType: v.union(
+      v.literal("customer"),
+      v.literal("rep"),
+      v.literal("ai"),
+    ),
     text: v.string(),
     timestamp: v.number(),
   }).index("by_call", ["callSessionId"]),
@@ -181,7 +194,11 @@ export default defineSchema({
     createdById: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
-    status: v.union(v.literal("pending"), v.literal("in_progress"), v.literal("completed")),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("in_progress"),
+      v.literal("completed"),
+    ),
     dueAt: v.optional(v.number()),
     createdAt: v.number(),
   })
