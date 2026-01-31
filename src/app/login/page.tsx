@@ -19,6 +19,7 @@ import { api } from "../../../convex/_generated/api";
 const demoAccounts = [
   { email: "customer@coco.com", role: "Customer" },
   { email: "rep.l1@coco.com", role: "Rep L1" },
+  { email: "rep.l2@coco.com", role: "Rep L2" },
   { email: "admin.manager@coco.com", role: "Admin" },
 ];
 
