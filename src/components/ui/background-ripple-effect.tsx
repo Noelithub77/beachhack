@@ -3,13 +3,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export const BackgroundRippleEffect = ({
-  rows = 16,
-  cols = 40,
   cellSize = 48,
-  autoRippleInterval = 5000, // Auto ripple every 5 seconds by default
+  autoRippleInterval = 5000,
 }: {
-  rows?: number;
-  cols?: number;
   cellSize?: number;
   autoRippleInterval?: number;
 }) => {
@@ -18,13 +14,34 @@ export const BackgroundRippleEffect = ({
     col: number;
   } | null>(null);
   const [rippleKey, setRippleKey] = useState(0);
+  const [dimensions, setDimensions] = useState({ rows: 30, cols: 60 });
   const ref = useRef<HTMLDivElement>(null);
+
+  // Calculate grid dimensions based on window size
+  useEffect(() => {
+    const calculateDimensions = () => {
+      // Use screen dimensions to ensure coverage even when zoomed out
+      const width = Math.max(window.innerWidth, window.screen.width, 2560);
+      const height = Math.max(window.innerHeight, window.screen.height, 1440);
+      
+      // Add extra cells to ensure full coverage
+      const cols = Math.ceil(width / cellSize) + 10;
+      const rows = Math.ceil(height / cellSize) + 10;
+      
+      setDimensions({ rows, cols });
+    };
+
+    calculateDimensions();
+    window.addEventListener("resize", calculateDimensions);
+    
+    return () => window.removeEventListener("resize", calculateDimensions);
+  }, [cellSize]);
 
   // Auto-trigger random ripples at slow intervals
   useEffect(() => {
     const triggerRandomRipple = () => {
-      const randomRow = Math.floor(Math.random() * rows);
-      const randomCol = Math.floor(Math.random() * cols);
+      const randomRow = Math.floor(Math.random() * dimensions.rows);
+      const randomCol = Math.floor(Math.random() * dimensions.cols);
       setClickedCell({ row: randomRow, col: randomCol });
       setRippleKey((k) => k + 1);
     };
@@ -43,22 +60,36 @@ export const BackgroundRippleEffect = ({
       clearTimeout(initialDelay);
       clearInterval(interval);
     };
-  }, [rows, cols, autoRippleInterval]);
+  }, [dimensions.rows, dimensions.cols, autoRippleInterval]);
 
   return (
     <div
       ref={ref}
       className={cn(
-        "fixed inset-0 h-full w-full overflow-hidden z-0",
+        "fixed inset-0 overflow-hidden z-0",
         "[--cell-border-color:rgba(111,133,81,0.2)] [--cell-fill-color:rgba(183,207,154,0.06)]",
         "dark:[--cell-border-color:rgba(61,74,50,0.25)] dark:[--cell-fill-color:rgba(111,133,81,0.05)]",
       )}
+      style={{
+        width: "100vw",
+        height: "100vh",
+        minWidth: "100%",
+        minHeight: "100%",
+      }}
     >
-      <div className="relative h-full w-full overflow-hidden">
+      <div 
+        className="absolute overflow-visible"
+        style={{
+          // Center the grid and make it overflow in all directions
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
         <DivGrid
           key={`base-${rippleKey}`}
-          rows={rows}
-          cols={cols}
+          rows={dimensions.rows}
+          cols={dimensions.cols}
           cellSize={cellSize}
           borderColor="var(--cell-border-color)"
           fillColor="var(--cell-fill-color)"
@@ -93,8 +124,8 @@ type CellStyle = React.CSSProperties & {
 
 const DivGrid = ({
   className,
-  rows = 16,
-  cols = 40,
+  rows = 30,
+  cols = 60,
   cellSize = 48,
   borderColor = "rgba(111,133,81,0.2)",
   fillColor = "rgba(183,207,154,0.06)",
