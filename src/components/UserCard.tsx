@@ -1,43 +1,40 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/../convex/_generated/api";
-import { Id } from "@/../convex/_generated/dataModel";
 import { authClient } from "@/lib/auth/auth-client";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Mail } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useSidebar } from "@/components/ui/sidebar";
 
-type RoleInfo = { role: string; subrole: string | null };
-
 type UserCardProps = {
-  restaurantId?: Id<"restaurants">;
   showSuperAdmin?: boolean;
-  onRoleLoad?: (roleInfo: RoleInfo) => void;
   inSidebar?: boolean;
 };
 
 // Internal component that uses useSidebar (only for sidebar context)
-function SidebarUserCard({ restaurantId, showSuperAdmin, onRoleLoad }: Omit<UserCardProps, "inSidebar">) {
+function SidebarUserCard({ showSuperAdmin }: Omit<UserCardProps, "inSidebar">) {
   const [session, setSession] = useState<any>(null);
-  const role = useQuery(api.functions.staff.myRole, restaurantId ? { restaurantId } : "skip");
   const { state } = useSidebar();
 
   useEffect(() => {
     authClient.getSession().then(({ data }) => setSession(data));
   }, []);
 
-  useEffect(() => {
-    if (role && onRoleLoad) onRoleLoad(role);
-  }, [role, onRoleLoad]);
-
   if (!session?.user) return null;
 
-  const displayRole = role?.role;
-  const userInitials = session.user.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "U";
+  const userInitials =
+    session.user.name
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
 
   if (state === "collapsed") {
     return (
@@ -45,17 +42,22 @@ function SidebarUserCard({ restaurantId, showSuperAdmin, onRoleLoad }: Omit<User
         <TooltipTrigger asChild>
           <div className="flex justify-center p-2">
             <Avatar className="h-8 w-8 border-muted-foreground/20">
-              <AvatarImage src={session.user.image || ""} alt={session.user.name} />
-              <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+              <AvatarImage
+                src={session.user.image || ""}
+                alt={session.user.name}
+              />
+              <AvatarFallback className="text-xs">
+                {userInitials}
+              </AvatarFallback>
             </Avatar>
           </div>
         </TooltipTrigger>
         <TooltipContent side="right" className="flex flex-col gap-1">
           <p className="font-semibold">{session.user.name}</p>
           <p className="text-xs text-muted-foreground">{session.user.email}</p>
-          {(showSuperAdmin || displayRole) && (
-            <Badge variant={showSuperAdmin || displayRole === "admin" ? "default" : "secondary"} className="w-fit mt-1">
-              {showSuperAdmin ? "Super Admin" : displayRole}{role?.subrole ? ` (${role.subrole})` : ""}
+          {showSuperAdmin && (
+            <Badge variant="default" className="w-fit mt-1">
+              Super Admin
             </Badge>
           )}
         </TooltipContent>
@@ -63,13 +65,24 @@ function SidebarUserCard({ restaurantId, showSuperAdmin, onRoleLoad }: Omit<User
     );
   }
 
-  return <UserCardContent session={session} role={role} showSuperAdmin={showSuperAdmin} />;
+  return <UserCardContent session={session} showSuperAdmin={showSuperAdmin} />;
 }
 
 // Shared content component
-function UserCardContent({ session, role, showSuperAdmin }: { session: any; role: RoleInfo | null | undefined; showSuperAdmin?: boolean }) {
-  const displayRole = role?.role;
-  const userInitials = session.user.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "U";
+function UserCardContent({
+  session,
+  showSuperAdmin,
+}: {
+  session: any;
+  showSuperAdmin?: boolean;
+}) {
+  const userInitials =
+    session.user.name
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
 
   return (
     <div className="flex items-center gap-3 w-full p-3 rounded-xl border bg-card text-card-foreground shadow-sm hover:bg-muted/50 transition-colors">
@@ -80,9 +93,12 @@ function UserCardContent({ session, role, showSuperAdmin }: { session: any; role
       <div className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold truncate">{session.user.name}</p>
-          {(showSuperAdmin || displayRole) && (
-            <Badge variant={showSuperAdmin || displayRole === "admin" ? "default" : "secondary"} className="h-5 px-2 text-[10px] rounded-full shrink-0">
-              {showSuperAdmin ? "Super Admin" : displayRole}{role?.subrole ? ` (${role.subrole})` : ""}
+          {showSuperAdmin && (
+            <Badge
+              variant="default"
+              className="h-5 px-2 text-[10px] rounded-full shrink-0"
+            >
+              Super Admin
             </Badge>
           )}
         </div>
@@ -95,25 +111,21 @@ function UserCardContent({ session, role, showSuperAdmin }: { session: any; role
   );
 }
 
-// Main export - routes to correct component based on context
-export default function UserCard({ restaurantId, showSuperAdmin, onRoleLoad, inSidebar = false }: UserCardProps) {
+// Main export
+export default function UserCard({
+  showSuperAdmin,
+  inSidebar = false,
+}: UserCardProps) {
   const [session, setSession] = useState<any>(null);
-  const role = useQuery(api.functions.staff.myRole, restaurantId ? { restaurantId } : "skip");
 
   useEffect(() => {
     authClient.getSession().then(({ data }) => setSession(data));
   }, []);
 
-  useEffect(() => {
-    if (role && onRoleLoad) onRoleLoad(role);
-  }, [role, onRoleLoad]);
-
-  // For sidebar, use the sidebar-aware component
   if (inSidebar) {
-    return <SidebarUserCard restaurantId={restaurantId} showSuperAdmin={showSuperAdmin} onRoleLoad={onRoleLoad} />;
+    return <SidebarUserCard showSuperAdmin={showSuperAdmin} />;
   }
 
-  // Regular card (outside sidebar)
   if (!session?.user) return null;
-  return <UserCardContent session={session} role={role} showSuperAdmin={showSuperAdmin} />;
+  return <UserCardContent session={session} showSuperAdmin={showSuperAdmin} />;
 }

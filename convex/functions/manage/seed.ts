@@ -59,33 +59,6 @@ export const seed = mutation({
             userIds[user.email] = id;
         }
 
-        // create sample tickets
-        const ticketId = await ctx.db.insert("tickets", {
-            customerId: userIds["customer@coco.com"],
-            vendorId: vendorCoco,
-            status: "created",
-            channel: "chat",
-            priority: "medium",
-            subject: "Need help with my account settings",
-            createdAt: now,
-            updatedAt: now,
-        });
-
-        // create conversation for ticket
-        const conversationId = await ctx.db.insert("conversations", {
-            ticketId,
-            channel: "chat",
-            createdAt: now,
-        });
-
-        // add initial message
-        await ctx.db.insert("messages", {
-            conversationId,
-            senderId: userIds["customer@coco.com"],
-            senderType: "customer",
-            content: "Hi, I'm having trouble updating my account settings. The save button doesn't seem to work.",
-            createdAt: now,
-        });
 
         return {
             success: true,
@@ -93,7 +66,6 @@ export const seed = mutation({
             data: {
                 vendors: 2,
                 users: users.length,
-                tickets: 1,
             },
         };
     },

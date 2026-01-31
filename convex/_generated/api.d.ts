@@ -20,6 +20,7 @@ import type * as functions_manage_reset from "../functions/manage/reset.js";
 import type * as functions_manage_seed from "../functions/manage/seed.js";
 import type * as functions_messages from "../functions/messages.js";
 import type * as functions_queues from "../functions/queues.js";
+import type * as functions_storage from "../functions/storage.js";
 import type * as functions_tasks from "../functions/tasks.js";
 import type * as functions_tickets from "../functions/tickets.js";
 import type * as functions_transcripts from "../functions/transcripts.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   "functions/manage/seed": typeof functions_manage_seed;
   "functions/messages": typeof functions_messages;
   "functions/queues": typeof functions_queues;
+  "functions/storage": typeof functions_storage;
   "functions/tasks": typeof functions_tasks;
   "functions/tickets": typeof functions_tickets;
   "functions/transcripts": typeof functions_transcripts;
