@@ -57,6 +57,24 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 6px);
   --radius-2xl: calc(var(--radius) + 10px);
+
+  /* Cell ripple animation */
+  --animate-cell-ripple: cell-ripple var(--duration, 200ms) ease-out none 1 var(--delay, 0ms);
+
+  @keyframes cell-ripple {
+    0% {
+      opacity: 0.3;
+      background-color: rgba(183, 207, 154, 0.06);
+    }
+    50% {
+      opacity: 1;
+      background-color: rgba(111, 133, 81, 0.25);
+    }
+    100% {
+      opacity: 0.3;
+      background-color: rgba(183, 207, 154, 0.06);
+    }
+  }
 }
 
 :root {
