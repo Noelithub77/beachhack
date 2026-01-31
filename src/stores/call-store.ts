@@ -2,44 +2,40 @@ import { create } from "zustand";
 
 interface CallState {
     isInCall: boolean;
-    callSessionId: string | null;
-    remoteUserId: string | null;
-    remoteUserName: string | null;
+    conversationId: string | null;
+    agentName: string;
     isMuted: boolean;
-    isSpeakerOn: boolean;
     callStartTime: number | null;
-    startCall: (sessionId: string, remoteId: string, remoteName: string) => void;
+    agentMode: "listening" | "speaking";
+    startCall: (conversationId: string, agentName?: string) => void;
     endCall: () => void;
+    setAgentMode: (mode: "listening" | "speaking") => void;
     toggleMute: () => void;
-    toggleSpeaker: () => void;
 }
 
 export const useCallStore = create<CallState>((set) => ({
     isInCall: false,
-    callSessionId: null,
-    remoteUserId: null,
-    remoteUserName: null,
+    conversationId: null,
+    agentName: "SAGE",
     isMuted: false,
-    isSpeakerOn: true,
     callStartTime: null,
-    startCall: (sessionId, remoteId, remoteName) =>
+    agentMode: "listening",
+    startCall: (conversationId, agentName = "SAGE") =>
         set({
             isInCall: true,
-            callSessionId: sessionId,
-            remoteUserId: remoteId,
-            remoteUserName: remoteName,
+            conversationId,
+            agentName,
             callStartTime: Date.now(),
             isMuted: false,
-            isSpeakerOn: true,
+            agentMode: "listening",
         }),
     endCall: () =>
         set({
             isInCall: false,
-            callSessionId: null,
-            remoteUserId: null,
-            remoteUserName: null,
+            conversationId: null,
             callStartTime: null,
+            agentMode: "listening",
         }),
+    setAgentMode: (mode) => set({ agentMode: mode }),
     toggleMute: () => set((s) => ({ isMuted: !s.isMuted })),
-    toggleSpeaker: () => set((s) => ({ isSpeakerOn: !s.isSpeakerOn })),
 }));
