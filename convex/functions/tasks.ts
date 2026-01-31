@@ -38,6 +38,15 @@ export const updateStatus = mutation({
     },
 });
 
+// delete task
+export const remove = mutation({
+    args: { taskId: v.id("tasks") },
+    handler: async (ctx, args) => {
+        await ctx.db.delete(args.taskId);
+        return { success: true };
+    },
+});
+
 // list tasks for user
 export const listByAssignee = query({
     args: { assigneeId: v.id("users") },

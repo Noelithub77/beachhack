@@ -51,6 +51,7 @@ export default function CustomerTickets() {
               priority={ticket.priority}
               updatedAt={ticket.updatedAt}
               href={`/customer/tickets/${ticket._id}`}
+              vendorName={ticket.vendorName}
             />
           ))}
         </div>
