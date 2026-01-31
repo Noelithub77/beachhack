@@ -47,7 +47,10 @@ export default function CustomerDashboard() {
             <Card className="group cursor-pointer h-full transition-all duration-300 hover:shadow-xl hover:border-primary/40 hover:scale-[1.02] bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
               <CardContent className="flex flex-col items-center justify-center p-8 text-center h-full min-h-[280px]">
                 <div className="rounded-2xl bg-primary/15 p-5 mb-5 group-hover:bg-primary/25 transition-colors">
-                  <Sparkles className="h-10 w-10 text-primary" strokeWidth={1.5} />
+                  <Sparkles
+                    className="h-10 w-10 text-primary"
+                    strokeWidth={1.5}
+                  />
                 </div>
                 <h2 className="text-2xl font-semibold mb-2">Quick Help</h2>
                 <div className="flex items-center gap-1.5 text-primary font-medium mb-3">
@@ -55,7 +58,8 @@ export default function CustomerDashboard() {
                   <span>AI-Powered</span>
                 </div>
                 <p className="text-muted-foreground text-sm mb-5">
-                  Get instant answers from our AI assistant. Fast, smart, and available 24/7.
+                  Get instant answers from our AI assistant. Fast, smart, and
+                  available 24/7.
                 </p>
                 <div className="flex items-center gap-2 text-primary font-medium group-hover:gap-3 transition-all">
                   <span>Start Now</span>
@@ -70,7 +74,10 @@ export default function CustomerDashboard() {
             <Card className="group cursor-pointer h-full transition-all duration-300 hover:shadow-xl hover:border-sage-500/40 hover:scale-[1.02] bg-gradient-to-br from-sage-500/5 to-sage-500/10 border-sage-500/20">
               <CardContent className="flex flex-col items-center justify-center p-8 text-center h-full min-h-[280px]">
                 <div className="rounded-2xl bg-sage-500/15 p-5 mb-5 group-hover:bg-sage-500/25 transition-colors">
-                  <UserRound className="h-10 w-10 text-sage-700 dark:text-sage-400" strokeWidth={1.5} />
+                  <UserRound
+                    className="h-10 w-10 text-sage-700 dark:text-sage-400"
+                    strokeWidth={1.5}
+                  />
                 </div>
                 <h2 className="text-2xl font-semibold mb-2">Talk to a Human</h2>
                 <div className="flex items-center gap-1.5 text-sage-700 dark:text-sage-400 font-medium mb-3">
@@ -78,7 +85,8 @@ export default function CustomerDashboard() {
                   <span>Personal Support</span>
                 </div>
                 <p className="text-muted-foreground text-sm mb-5">
-                  Connect with a support representative via chat, email, or phone.
+                  Connect with a support representative via chat, email, or
+                  phone.
                 </p>
                 <div className="flex items-center gap-2 text-sage-700 dark:text-sage-400 font-medium group-hover:gap-3 transition-all">
                   <span>Get Help</span>
