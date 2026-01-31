@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useAuthStore } from "@/stores/auth-store";
-import { Sparkles, Bot, User } from "lucide-react";
+import { Sparkles, WandSparkles, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
 import {
@@ -218,7 +218,7 @@ export function AIChatInterface({
                     <div className="flex items-start gap-3">
                       {isAi && (
                         <div className="shrink-0 rounded-full bg-primary/10 p-2">
-                          <Bot className="h-4 w-4 text-primary" />
+                          <WandSparkles className="h-4 w-4 text-primary" />
                         </div>
                       )}
                       <MessageContent

@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   ArrowLeft,
   Phone,
-  Bot,
+  WandSparkles,
   Building2,
   Mic,
   MicOff,
@@ -263,7 +263,7 @@ export default function CallPage() {
             >
               <CardContent className="flex items-center gap-4 p-6">
                 <div className="rounded-full bg-primary/10 p-4">
-                  <Bot className="h-8 w-8 text-primary" />
+                  <WandSparkles className="h-8 w-8 text-primary" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold">Talk to SAGE</h3>
