@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     try {
         const body = await req.json();
-        const { toNumber, vendorName, userName, userId } = body;
+        const { toNumber, vendorName, userName, userId, ticketId } = body;
 
         if (!toNumber) {
             return NextResponse.json(
@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
                             vendor_name: vendorName || "Support",
                             user_name: userName || "Customer",
                             user_id: userId || "anonymous",
+                            ticket_id: ticketId || "",
                         },
                     },
                 }),

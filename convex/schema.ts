@@ -265,4 +265,31 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_vendor", ["vendorId"])
     .index("by_ticket", ["sourceTicketId"]),
+
+  // AI agent outbound calls
+  outboundCalls: defineTable({
+    ticketId: v.id("tickets"),
+    customerId: v.id("users"),
+    phoneNumber: v.string(),
+    conversationId: v.optional(v.string()),
+    callSid: v.optional(v.string()),
+    status: v.union(
+      v.literal("initiating"),
+      v.literal("ringing"),
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    transcript: v.optional(v.array(v.object({
+      role: v.string(),
+      content: v.string(),
+      timestamp: v.optional(v.number()),
+    }))),
+    summary: v.optional(v.string()),
+    duration: v.optional(v.number()),
+    startedAt: v.number(),
+    endedAt: v.optional(v.number()),
+  })
+    .index("by_ticket", ["ticketId"])
+    .index("by_conversation", ["conversationId"]),
 });
