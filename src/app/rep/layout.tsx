@@ -11,7 +11,8 @@ import { usePathname } from "next/navigation";
 export default function RepLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   // Check if we're on a ticket detail page - these need full-height layout
-  const isTicketPage = pathname.includes("/rep/inbox/") && pathname !== "/rep/inbox";
+  // Full-height layout for inbox and ticket detail pages
+  const isFullHeightPage = pathname.includes("/rep/inbox");
 
   return (
     <SidebarProvider>
@@ -20,7 +21,7 @@ export default function RepLayout({ children }: { children: React.ReactNode }) {
         <header className="shrink-0 sticky top-0 z-40 flex h-12 items-center gap-4 border-b bg-white px-4">
           <SidebarTrigger />
         </header>
-        <main className={isTicketPage ? "flex-1 overflow-hidden" : "flex-1 overflow-auto p-4 md:p-6"}>
+        <main className={isFullHeightPage ? "flex-1 overflow-hidden" : "flex-1 overflow-auto p-4 md:p-6"}>
           {children}
         </main>
       </SidebarInset>
