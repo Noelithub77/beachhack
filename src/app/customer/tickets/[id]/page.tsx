@@ -29,6 +29,7 @@ import { ChatInterface } from "@/components/chat/chat-interface";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
+import { Suspense } from "react";
 
 export default function TicketDetailPage() {
   const params = useParams();
@@ -220,10 +221,18 @@ export default function TicketDetailPage() {
         </CardHeader>
         <CardContent className="p-0 h-[400px]">
           {conversation ? (
-            <ChatInterface
-              conversationId={conversation._id}
-              ticketId={ticketId}
-            />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              }
+            >
+              <ChatInterface
+                conversationId={conversation._id}
+                ticketId={ticketId}
+              />
+            </Suspense>
           ) : (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

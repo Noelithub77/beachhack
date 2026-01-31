@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Supermemory } from "supermemory";
 
-// search memories using Supermemory SDK
 export async function POST(req: NextRequest) {
     const apiKey = process.env.SUPERMEMORY_API_KEY;
 
@@ -18,18 +17,31 @@ export async function POST(req: NextRequest) {
 
         const client = new Supermemory({ apiKey });
 
-        const result = await client.memories.search({
-            query,
+        const result = await client.search.execute({
+            q: query,
             containerTags: userId ? [userId] : undefined,
-            topK: limit,
+            limit,
         });
 
         // format results for context injection
-        const memories = (result.results || []).map((r) => ({
-            content: r.content,
-            score: r.score,
-            metadata: r.metadata,
-        }));
+        const memories = (result.results || []).map((r) => {
+            // handle both memory and chunk results
+            if ("memory" in r) {
+                return {
+                    content: r.memory,
+                    score: r.score,
+                };
+            } else if ("chunk" in r) {
+                return {
+                    content: r.chunk,
+                    score: r.score,
+                };
+            }
+            return {
+                content: String(r),
+                score: 0,
+            };
+        });
 
         return NextResponse.json({ memories });
     } catch (error) {

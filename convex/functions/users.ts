@@ -74,3 +74,45 @@ export const createUser = mutation({
         return { success: true, userId: id };
     },
 });
+
+// list team members (reps) for a vendor with ticket counts
+export const listTeamMembers = query({
+    args: { vendorId: v.optional(v.id("vendors")) },
+    handler: async (ctx, args) => {
+        let users;
+        if (args.vendorId) {
+            users = await ctx.db
+                .query("users")
+                .withIndex("by_vendor", (q) => q.eq("vendorId", args.vendorId))
+                .collect();
+        } else {
+            users = await ctx.db.query("users").collect();
+        }
+
+        // filter to reps only
+        const reps = users.filter((u) => u.role.startsWith("rep_"));
+
+        // get ticket counts per rep
+        const withCounts = await Promise.all(
+            reps.map(async (rep) => {
+                const tickets = await ctx.db
+                    .query("tickets")
+                    .withIndex("by_rep", (q) => q.eq("assignedRepId", rep._id))
+                    .collect();
+                const activeTickets = tickets.filter(
+                    (t) => t.status !== "closed" && t.status !== "resolved"
+                );
+                return {
+                    id: rep._id,
+                    name: rep.name,
+                    role: rep.role,
+                    isActive: rep.isActive,
+                    ticketCount: activeTickets.length,
+                };
+            })
+        );
+
+        return withCounts;
+    },
+});
+

@@ -80,3 +80,58 @@ export const companyStats = query({
         };
     },
 });
+
+// rep performance stats with detailed metrics
+export const repPerformance = query({
+    args: { repId: v.id("users") },
+    handler: async (ctx, args) => {
+        const tickets = await ctx.db
+            .query("tickets")
+            .withIndex("by_rep", (q) => q.eq("assignedRepId", args.repId))
+            .collect();
+
+        const resolved = tickets.filter((t) => t.resolvedAt);
+        const avgResolutionMs = resolved.length > 0
+            ? resolved.reduce((acc, t) => acc + (t.resolvedAt! - t.createdAt), 0) / resolved.length
+            : 0;
+
+        // get feedback for rating
+        const feedbackPromises = tickets.map((t) =>
+            ctx.db.query("feedback").withIndex("by_ticket", (q) => q.eq("ticketId", t._id)).first()
+        );
+        const feedback = await Promise.all(feedbackPromises);
+        const ratings = feedback.filter(Boolean).map((f) => f!.rating);
+        const avgRating = ratings.length > 0
+            ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+            : 0;
+
+        // today's resolved count
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const resolvedToday = resolved.filter((t) => t.resolvedAt! >= today.getTime()).length;
+
+        // recent activity (sorted by updatedAt desc)
+        const recentTickets = tickets
+            .sort((a, b) => b.updatedAt - a.updatedAt)
+            .slice(0, 10);
+
+        const escalated = tickets.filter((t) => t.status === "escalated").length;
+        const escalationRate = tickets.length > 0 ? escalated / tickets.length : 0;
+
+        return {
+            total: tickets.length,
+            resolved: resolved.length,
+            resolvedToday,
+            avgResolutionMinutes: Math.round(avgResolutionMs / 60000),
+            avgRating: Math.round(avgRating * 10) / 10,
+            escalationRate: Math.round(escalationRate * 100),
+            recentActivity: recentTickets.map((t) => ({
+                ticketId: t._id,
+                subject: t.subject,
+                status: t.status,
+                updatedAt: t.updatedAt,
+            })),
+        };
+    },
+});
+

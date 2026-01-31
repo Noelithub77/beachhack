@@ -268,7 +268,17 @@ export const listActive = query({
 
 // list unassigned tickets for rep queue
 export const listUnassigned = query({
-  args: { vendorId: v.optional(v.id("vendors")) },
+  args: {
+    vendorId: v.optional(v.id("vendors")),
+    channel: v.optional(
+      v.union(
+        v.literal("chat"),
+        v.literal("call"),
+        v.literal("email"),
+        v.literal("docs"),
+      )
+    ),
+  },
   handler: async (ctx, args) => {
     let tickets;
     if (args.vendorId) {
@@ -281,7 +291,14 @@ export const listUnassigned = query({
     } else {
       tickets = await ctx.db.query("tickets").order("desc").collect();
     }
-    return tickets.filter((t) => !t.assignedRepId && t.status !== "closed");
+
+    let filtered = tickets.filter((t) => !t.assignedRepId && t.status !== "closed");
+
+    if (args.channel) {
+      filtered = filtered.filter((t) => t.channel === args.channel);
+    }
+
+    return filtered;
   },
 });
 
