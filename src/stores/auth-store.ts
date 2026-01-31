@@ -18,6 +18,7 @@ interface User {
     vendorId?: string;
     language: string;
     avatarUrl?: string;
+    phoneNumber?: string;
 }
 
 interface AuthState {

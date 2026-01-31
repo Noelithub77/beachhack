@@ -49,6 +49,7 @@ export default defineSchema({
     vendorId: v.optional(v.id("vendors")),
     language: v.string(),
     avatarUrl: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
     isActive: v.boolean(),
     createdAt: v.number(),
   })

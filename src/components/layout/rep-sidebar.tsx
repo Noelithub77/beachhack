@@ -10,6 +10,7 @@ import {
   Users,
   LogOut,
   PanelLeft,
+  User,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +32,7 @@ const navItems = [
   { label: "Tasks", href: "/rep/tasks", icon: ListTodo },
   { label: "Analytics", href: "/rep/analytics", icon: BarChart3 },
   { label: "Team", href: "/rep/team", icon: Users },
+  { label: "Profile", href: "/rep/profile", icon: User },
 ];
 
 export function RepSidebar(props: React.ComponentProps<typeof Sidebar>) {

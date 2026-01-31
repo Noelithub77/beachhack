@@ -146,6 +146,31 @@ export default function TicketDetailPage() {
             )}
           </div>
 
+          {/* Rep callback info for call tickets */}
+          {ticket.channel === "call" && ticket.rep && (
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                <div className="rounded-full bg-green-100 dark:bg-green-900 p-2">
+                  <Phone className="h-4 w-4 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                    {ticket.rep.name} will call you
+                  </p>
+                  {ticket.rep.phoneNumber ? (
+                    <p className="text-sm text-green-600 dark:text-green-400">
+                      Rep's number: {ticket.rep.phoneNumber}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Rep contact will be shared soon
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Intake Details if available */}
           {(ticket.category || ticket.severity || ticket.description) && (
             <div className="mt-4 pt-4 border-t space-y-3">

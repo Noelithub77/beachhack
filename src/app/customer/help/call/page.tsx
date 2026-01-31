@@ -13,6 +13,7 @@ import {
 } from "@/components/call/transcription-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PhoneInput } from "@/components/ui/phone-input";
 import {
   ArrowLeft,
   Phone,
@@ -22,6 +23,10 @@ import {
   MicOff,
   PhoneOff,
   AlertCircle,
+  PhoneOutgoing,
+  Loader2,
+  UserRound,
+  CheckCircle,
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
@@ -29,6 +34,8 @@ import { Id } from "@/../convex/_generated/dataModel";
 import Link from "next/link";
 
 type CallMode = "idle" | "connecting" | "active";
+type OutboundCallStatus = "idle" | "initiating" | "queued" | "error";
+type CallbackStatus = "idle" | "requesting" | "requested";
 
 export default function CallPage() {
   const router = useRouter();
@@ -43,6 +50,17 @@ export default function CallPage() {
     string | null
   >(null);
 
+  // outbound call state
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [outboundStatus, setOutboundStatus] =
+    useState<OutboundCallStatus>("idle");
+  const [outboundError, setOutboundError] = useState<string | null>(null);
+  const [outboundCallSid, setOutboundCallSid] = useState<string | null>(null);
+
+  // callback request state
+  const [callbackStatus, setCallbackStatus] = useState<CallbackStatus>("idle");
+  const [callbackTicketId, setCallbackTicketId] = useState<string | null>(null);
+
   const vendorId = searchParams.get("vendor");
 
   const vendor = useQuery(
@@ -52,6 +70,7 @@ export default function CallPage() {
 
   const startCallSession = useMutation(api.functions.calls.start);
   const endCallSession = useMutation(api.functions.calls.end);
+  const createTicket = useMutation(api.functions.tickets.create);
 
   // ElevenLabs conversation hook
   const conversation = useElevenLabsConversation({
@@ -81,13 +100,12 @@ export default function CallPage() {
     },
   });
 
-  // start call
+  // start WebRTC call
   const handleStartCall = useCallback(async () => {
     if (!user || !vendorId) return;
 
     setMode("connecting");
 
-    // create call session in backend
     const result = await startCallSession({
       vendorId: vendorId as Id<"vendors">,
       callerId: user.id as Id<"users">,
@@ -101,7 +119,6 @@ export default function CallPage() {
     setCurrentTicketId(result.ticketId);
     setCurrentCallSessionId(result.callSessionId);
 
-    // start ElevenLabs conversation with context
     const convId = await conversation.startConversation({
       vendorName: vendor?.name,
       vendorContext: vendor?.description,
@@ -116,12 +133,53 @@ export default function CallPage() {
     }
   }, [user, vendorId, vendor, startCallSession, conversation, startCall]);
 
-  // end call
+  // start outbound phone call
+  const handleOutboundCall = useCallback(async () => {
+    if (!phoneNumber) return;
+
+    setOutboundStatus("initiating");
+    setOutboundError(null);
+
+    try {
+      const res = await fetch("/api/elevenlabs/outbound-call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toNumber: phoneNumber,
+          vendorName: vendor?.name,
+          userName: user?.name,
+          userId: user?.id,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to initiate call");
+      }
+
+      setOutboundStatus("queued");
+      setOutboundCallSid(data.callSid);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to call";
+      setOutboundError(msg);
+      setOutboundStatus("error");
+    }
+  }, [phoneNumber, vendor, user]);
+
+  // reset outbound call
+  const resetOutboundCall = useCallback(() => {
+    setOutboundStatus("idle");
+    setOutboundError(null);
+    setOutboundCallSid(null);
+    setPhoneNumber("");
+  }, []);
+
+  // end WebRTC call
   const handleHangUp = useCallback(async () => {
     await conversation.endConversation();
     endCall();
 
-    // sync transcripts to memory before clearing
     if (user?.id && transcripts.length > 0) {
       try {
         await fetch("/api/memory/sync-transcript", {
@@ -236,7 +294,7 @@ export default function CallPage() {
 
       {/* main content */}
       <div className="flex-1 space-y-6">
-        {/* idle state - start call button */}
+        {/* idle state - call options */}
         {mode === "idle" && (
           <div className="grid gap-4">
             {/* error display */}
@@ -250,7 +308,7 @@ export default function CallPage() {
               </div>
             )}
 
-            {/* AI call option */}
+            {/* AI call option (WebRTC) */}
             <Card
               className="cursor-pointer transition-all hover:shadow-soft hover:border-primary/20"
               onClick={handleStartCall}
@@ -266,6 +324,148 @@ export default function CallPage() {
                   </p>
                 </div>
                 <Phone className="h-5 w-5 text-muted-foreground" />
+              </CardContent>
+            </Card>
+
+            {/* Outbound call option */}
+            <Card className="transition-all overflow-visible">
+              <CardContent className="p-6 overflow-visible">
+                <div className="flex items-center gap-4">
+                  <div className="rounded-full bg-blue-500/10 p-3 shrink-0">
+                    <PhoneOutgoing className="h-6 w-6 text-blue-500" />
+                  </div>
+                  <div className="min-w-0 shrink-0">
+                    <h3 className="font-semibold">Call a Number</h3>
+                    <p className="text-xs text-muted-foreground">
+                      SAGE calls on your behalf
+                    </p>
+                  </div>
+
+                  {outboundStatus === "idle" && (
+                    <div className="flex-1 flex gap-2 items-center justify-end">
+                      <div className="flex-1 max-w-xs">
+                        <PhoneInput
+                          defaultCountry="IN"
+                          value={phoneNumber}
+                          onChange={setPhoneNumber}
+                          placeholder="Phone number"
+                        />
+                      </div>
+                      <Button
+                        onClick={handleOutboundCall}
+                        disabled={!phoneNumber || phoneNumber.length < 10}
+                        size="sm"
+                      >
+                        <Phone className="h-4 w-4 mr-1" />
+                        Call
+                      </Button>
+                    </div>
+                  )}
+
+                  {outboundStatus === "initiating" && (
+                    <div className="flex-1 flex items-center justify-end gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Initiating call...
+                    </div>
+                  )}
+
+                  {outboundStatus === "queued" && (
+                    <div className="flex-1 flex items-center justify-end gap-3">
+                      <div className="flex items-center gap-2 text-sm text-green-600">
+                        <Phone className="h-4 w-4" />
+                        Call initiated!
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={resetOutboundCall}
+                      >
+                        New Call
+                      </Button>
+                    </div>
+                  )}
+
+                  {outboundError && (
+                    <div className="flex-1 flex items-center justify-end gap-2">
+                      <span className="text-sm text-destructive">
+                        {outboundError}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={resetOutboundCall}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Request callback from rep */}
+            <Card className="transition-all">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="rounded-full bg-green-500/10 p-4">
+                    <UserRound className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold">Request Callback from Rep</h3>
+                    <p className="text-sm text-muted-foreground">
+                      A representative will call you back
+                    </p>
+                  </div>
+                  {callbackStatus === "idle" && (
+                    <Button
+                      onClick={async () => {
+                        if (!user || !vendorId) return;
+                        setCallbackStatus("requesting");
+                        try {
+                          const result = await createTicket({
+                            customerId: user.id as Id<"users">,
+                            vendorId: vendorId as Id<"vendors">,
+                            channel: "call",
+                            priority: "medium",
+                            subject: "Callback request",
+                            description:
+                              "Customer requested a callback from a representative.",
+                          });
+                          if (result.success) {
+                            setCallbackTicketId(result.ticketId);
+                            setCallbackStatus("requested");
+                          }
+                        } catch {
+                          setCallbackStatus("idle");
+                        }
+                      }}
+                    >
+                      Request
+                    </Button>
+                  )}
+                  {callbackStatus === "requesting" && (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  )}
+                  {callbackStatus === "requested" && (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  )}
+                </div>
+                {callbackStatus === "requested" && callbackTicketId && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-sm text-green-600 font-medium">
+                      Request submitted!
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      A rep will accept your request and their contact will
+                      appear on your ticket.
+                    </p>
+                    <Link href={`/customer/tickets/${callbackTicketId}`}>
+                      <Button variant="outline" size="sm" className="mt-2">
+                        View Ticket
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

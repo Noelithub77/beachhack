@@ -8,6 +8,7 @@ export const updateProfile = mutation({
         name: v.optional(v.string()),
         language: v.optional(v.string()),
         avatarUrl: v.optional(v.string()),
+        phoneNumber: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const { userId, ...updates } = args;
@@ -16,6 +17,14 @@ export const updateProfile = mutation({
         );
         await ctx.db.patch(userId, filtered);
         return { success: true };
+    },
+});
+
+// get user by id
+export const getById = query({
+    args: { userId: v.id("users") },
+    handler: async (ctx, args) => {
+        return await ctx.db.get(args.userId);
     },
 });
 

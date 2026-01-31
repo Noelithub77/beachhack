@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,17 +13,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ChevronRight, LogOut, Phone, Mail, Pencil } from "lucide-react";
+import { Phone, Mail, Building2, Pencil, BadgeCheck } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
-import { useRouter } from "next/navigation";
 
-export default function CustomerProfile() {
-  const router = useRouter();
-  const { user, setUser, logout } = useAuthStore();
+export default function RepProfile() {
+  const { user, setUser } = useAuthStore();
   const updateProfile = useMutation(api.functions.users.updateProfile);
+
+  const vendor = useQuery(
+    api.functions.vendors.getById,
+    user?.vendorId ? { id: user.vendorId as Id<"vendors"> } : "skip",
+  );
 
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState(user?.name ?? "");
@@ -38,6 +40,15 @@ export default function CustomerProfile() {
       .join("")
       .toUpperCase()
       .slice(0, 2) ?? "?";
+
+  const roleLabel =
+    user?.role === "rep_l1"
+      ? "L1 Support"
+      : user?.role === "rep_l2"
+        ? "L2 Support"
+        : user?.role === "rep_l3"
+          ? "L3 Support"
+          : (user?.role ?? "Representative");
 
   const handleSave = async () => {
     if (!user?.id) return;
@@ -55,11 +66,6 @@ export default function CustomerProfile() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
-
   if (!user) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -72,7 +78,7 @@ export default function CustomerProfile() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Profile</h1>
-        <p className="text-muted-foreground">Manage your account settings</p>
+        <p className="text-muted-foreground">Your account information</p>
       </div>
 
       {/* user info */}
@@ -84,17 +90,20 @@ export default function CustomerProfile() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-1">
-            <p className="text-lg font-medium">{user.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-medium">{user.name}</p>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {roleLabel}
+              </span>
+            </div>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Mail className="h-3.5 w-3.5" />
               {user.email}
             </div>
-            {user.phoneNumber && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Phone className="h-3.5 w-3.5" />
-                {user.phoneNumber}
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Phone className="h-3.5 w-3.5" />
+              {user.phoneNumber || "No phone set"}
+            </div>
           </div>
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogTrigger asChild>
@@ -125,6 +134,10 @@ export default function CustomerProfile() {
                     onChange={(e) => setEditPhone(e.target.value)}
                     placeholder="+1 234 567 8900"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    This will be shared with customers when you accept their
+                    callback requests.
+                  </p>
                 </div>
                 <Button
                   onClick={handleSave}
@@ -139,56 +152,44 @@ export default function CustomerProfile() {
         </CardContent>
       </Card>
 
-      {/* preferences */}
+      {/* company info */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Preferences</CardTitle>
+          <CardTitle className="text-base">Company</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="notifications">Push Notifications</Label>
-            <Switch id="notifications" defaultChecked />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="email-updates">Email Updates</Label>
-            <Switch id="email-updates" defaultChecked />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="context-sharing">Cross-Vendor Context</Label>
-            <Switch id="context-sharing" />
-          </div>
+        <CardContent>
+          {vendor ? (
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-muted p-2.5">
+                <Building2 className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="font-medium">{vendor.name}</p>
+                {vendor.category && (
+                  <p className="text-sm text-muted-foreground">
+                    {vendor.category}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No company assigned</p>
+          )}
         </CardContent>
       </Card>
 
-      {/* privacy */}
+      {/* status */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Privacy</CardTitle>
+          <CardTitle className="text-base">Status</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <Button variant="ghost" className="w-full justify-between">
-            View stored context data
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-between text-destructive hover:text-destructive"
-          >
-            Delete my data
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <BadgeCheck className="h-5 w-5 text-green-500" />
+            <span className="text-sm font-medium text-green-600">Active</span>
+          </div>
         </CardContent>
       </Card>
-
-      {/* sign out */}
-      <Button
-        variant="outline"
-        className="w-full gap-2 text-muted-foreground"
-        onClick={handleLogout}
-      >
-        <LogOut className="h-4 w-4" />
-        Sign Out
-      </Button>
     </div>
   );
 }
