@@ -5,8 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCallStore } from "@/stores/call-store";
 import { useElevenLabsConversation } from "@/hooks/use-elevenlabs-conversation";
-import { useTwilioDevice } from "@/hooks/use-twilio-device";
-import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { CallAvatar } from "@/components/call/call-avatar";
 import { CallTimer } from "@/components/call/call-timer";
 import {
@@ -15,7 +13,6 @@ import {
 } from "@/components/call/transcription-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PhoneInput } from "@/components/ui/phone-input";
 import {
   ArrowLeft,
   Phone,
@@ -25,11 +22,9 @@ import {
   MicOff,
   PhoneOff,
   AlertCircle,
-  PhoneOutgoing,
   Loader2,
   UserRound,
   CheckCircle,
-  Headphones,
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
@@ -37,7 +32,6 @@ import { Id } from "@/../convex/_generated/dataModel";
 import Link from "next/link";
 
 type CallMode = "idle" | "connecting" | "active" | "rep_call";
-type OutboundCallStatus = "idle" | "initiating" | "queued" | "error";
 type CallbackStatus = "idle" | "requesting" | "requested";
 
 export default function CallPage() {
@@ -53,13 +47,6 @@ export default function CallPage() {
     string | null
   >(null);
 
-  // outbound call state
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [outboundStatus, setOutboundStatus] =
-    useState<OutboundCallStatus>("idle");
-  const [outboundError, setOutboundError] = useState<string | null>(null);
-  const [outboundCallSid, setOutboundCallSid] = useState<string | null>(null);
-
   // callback request state
   const [callbackStatus, setCallbackStatus] = useState<CallbackStatus>("idle");
   const [callbackTicketId, setCallbackTicketId] = useState<string | null>(null);
@@ -74,42 +61,6 @@ export default function CallPage() {
   const startCallSession = useMutation(api.functions.calls.start);
   const endCallSession = useMutation(api.functions.calls.end);
   const createTicket = useMutation(api.functions.tickets.create);
-
-  // Twilio device for calling reps
-  const twilioDevice = useTwilioDevice({
-    identity: user?.id ? `customer_${user.id}` : "",
-    onCallDisconnect: () => {
-      setMode("idle");
-      endCall();
-      repSpeech.stop();
-    },
-  });
-
-  // speech recognition for rep calls
-  const repSpeech = useSpeechRecognition({
-    onTranscript: (text, isFinal) => {
-      if (isFinal && text.trim()) {
-        setTranscripts((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            speaker: "customer" as const,
-            text: text.trim(),
-            timestamp: Date.now(),
-          },
-        ]);
-      }
-    },
-  });
-
-  // register Twilio device on mount
-  useEffect(() => {
-    if (user?.id) {
-      twilioDevice.register();
-    }
-    return () => twilioDevice.unregister();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
 
   // ElevenLabs conversation hook
   const conversation = useElevenLabsConversation({
@@ -171,48 +122,6 @@ export default function CallPage() {
       setMode("idle");
     }
   }, [user, vendorId, vendor, startCallSession, conversation, startCall]);
-
-  // start outbound phone call
-  const handleOutboundCall = useCallback(async () => {
-    if (!phoneNumber) return;
-
-    setOutboundStatus("initiating");
-    setOutboundError(null);
-
-    try {
-      const res = await fetch("/api/elevenlabs/outbound-call", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          toNumber: phoneNumber,
-          vendorName: vendor?.name,
-          userName: user?.name,
-          userId: user?.id,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to initiate call");
-      }
-
-      setOutboundStatus("queued");
-      setOutboundCallSid(data.callSid);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to call";
-      setOutboundError(msg);
-      setOutboundStatus("error");
-    }
-  }, [phoneNumber, vendor, user]);
-
-  // reset outbound call
-  const resetOutboundCall = useCallback(() => {
-    setOutboundStatus("idle");
-    setOutboundError(null);
-    setOutboundCallSid(null);
-    setPhoneNumber("");
-  }, []);
 
   // end WebRTC call
   const handleHangUp = useCallback(async () => {
@@ -335,10 +244,10 @@ export default function CallPage() {
       <div className="flex-1 space-y-6">
         {/* idle state - call options */}
         {mode === "idle" && (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* error display */}
             {conversation.error && (
-              <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+              <div className="col-span-1 md:col-span-2 flex items-start gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
                 <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                 <div>
                   <p className="font-medium">Connection Error</p>
@@ -363,82 +272,6 @@ export default function CallPage() {
                   </p>
                 </div>
                 <Phone className="h-5 w-5 text-muted-foreground" />
-              </CardContent>
-            </Card>
-
-            {/* Outbound call option */}
-            <Card className="transition-all overflow-visible">
-              <CardContent className="p-6 overflow-visible">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full bg-blue-500/10 p-3 shrink-0">
-                    <PhoneOutgoing className="h-6 w-6 text-blue-500" />
-                  </div>
-                  <div className="min-w-0 shrink-0">
-                    <h3 className="font-semibold">Call a Number</h3>
-                    <p className="text-xs text-muted-foreground">
-                      SAGE calls on your behalf
-                    </p>
-                  </div>
-
-                  {outboundStatus === "idle" && (
-                    <div className="flex-1 flex gap-2 items-center justify-end">
-                      <div className="flex-1 max-w-xs">
-                        <PhoneInput
-                          defaultCountry="IN"
-                          value={phoneNumber}
-                          onChange={setPhoneNumber}
-                          placeholder="Phone number"
-                        />
-                      </div>
-                      <Button
-                        onClick={handleOutboundCall}
-                        disabled={!phoneNumber || phoneNumber.length < 10}
-                        size="sm"
-                      >
-                        <Phone className="h-4 w-4 mr-1" />
-                        Call
-                      </Button>
-                    </div>
-                  )}
-
-                  {outboundStatus === "initiating" && (
-                    <div className="flex-1 flex items-center justify-end gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Initiating call...
-                    </div>
-                  )}
-
-                  {outboundStatus === "queued" && (
-                    <div className="flex-1 flex items-center justify-end gap-3">
-                      <div className="flex items-center gap-2 text-sm text-green-600">
-                        <Phone className="h-4 w-4" />
-                        Call initiated!
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={resetOutboundCall}
-                      >
-                        New Call
-                      </Button>
-                    </div>
-                  )}
-
-                  {outboundError && (
-                    <div className="flex-1 flex items-center justify-end gap-2">
-                      <span className="text-sm text-destructive">
-                        {outboundError}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={resetOutboundCall}
-                      >
-                        Retry
-                      </Button>
-                    </div>
-                  )}
-                </div>
               </CardContent>
             </Card>
 
@@ -505,45 +338,6 @@ export default function CallPage() {
                     </Link>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Call Rep Now via WebRTC */}
-            <Card className="transition-all hover:shadow-soft hover:border-purple-500/20">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full bg-purple-500/10 p-4">
-                    <Headphones className="h-8 w-8 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold">Call Rep Now</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Connect directly via browser
-                    </p>
-                  </div>
-                  {twilioDevice.state === "ready" ? (
-                    <Button
-                      className="bg-purple-600 hover:bg-purple-700"
-                      onClick={async () => {
-                        if (!vendorId) return;
-                        setMode("rep_call");
-                        // call any available rep for this vendor
-                        await twilioDevice.makeCall(`rep_vendor_${vendorId}`);
-                        startCall(`rep_${vendorId}`, "Rep");
-                        repSpeech.start();
-                      }}
-                    >
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      {twilioDevice.state === "registering"
-                        ? "Connecting..."
-                        : "Offline"}
-                    </span>
-                  )}
-                </div>
               </CardContent>
             </Card>
           </div>
