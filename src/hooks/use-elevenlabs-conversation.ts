@@ -40,12 +40,14 @@ export function useElevenLabsConversation(options: UseElevenLabsConversationOpti
     const messageIdCounter = useRef(0);
 
     const addMessage = useCallback((role: "user" | "agent", text: string) => {
+        if (!text || text.trim() === "") return;
         const message: Message = {
             id: `msg-${++messageIdCounter.current}`,
             role,
             text,
             timestamp: Date.now(),
         };
+        console.log("[ElevenLabs] Adding message:", message);
         setMessages(prev => [...prev, message]);
         onMessage?.(message);
     }, [onMessage]);
@@ -63,19 +65,64 @@ export function useElevenLabsConversation(options: UseElevenLabsConversationOpti
             onStatusChange?.("disconnected");
         },
         onMessage: (message) => {
-            console.log("[ElevenLabs] Message:", message);
-            // cast to access properties - ElevenLabs types are generic
-            const msg = message as { type?: string; role?: string; isFinal?: boolean; message?: string };
-            // handle transcript messages
+            console.log("[ElevenLabs] Raw message received:", JSON.stringify(message, null, 2));
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const msg = message as any;
+
+            // format 1: source-based (newer SDK)
+            if (msg.source === "user" && msg.message) {
+                addMessage("user", msg.message);
+                return;
+            }
+            if (msg.source === "ai" && msg.message) {
+                addMessage("agent", msg.message);
+                return;
+            }
+
+            // format 2: type-based events
+            if (msg.type === "user_transcript" && msg.user_transcript) {
+                addMessage("user", msg.user_transcript);
+                return;
+            }
+            if (msg.type === "agent_response" && msg.agent_response) {
+                addMessage("agent", msg.agent_response);
+                return;
+            }
+
+            // format 3: transcript event with message field
             if (msg.type === "transcript" && msg.role === "user" && msg.isFinal && msg.message) {
                 addMessage("user", msg.message);
-            } else if (msg.type === "agent_response" && msg.message) {
+                return;
+            }
+            if (msg.type === "agent_response" && msg.message) {
                 addMessage("agent", msg.message);
+                return;
+            }
+
+            // format 4: direct role/text structure
+            if (msg.role === "user" && msg.text) {
+                addMessage("user", msg.text);
+                return;
+            }
+            if ((msg.role === "agent" || msg.role === "assistant") && msg.text) {
+                addMessage("agent", msg.text);
+                return;
+            }
+
+            // format 5: message with content field
+            if (msg.role === "user" && msg.content) {
+                addMessage("user", msg.content);
+                return;
+            }
+            if ((msg.role === "agent" || msg.role === "assistant") && msg.content) {
+                addMessage("agent", msg.content);
+                return;
             }
         },
         onModeChange: (data) => {
             const mode = data.mode as AgentMode;
-            console.log("[ElevenLabs] Mode:", mode);
+            console.log("[ElevenLabs] Mode changed:", mode);
             setAgentMode(mode);
             onModeChange?.(mode);
         },
@@ -110,11 +157,11 @@ export function useElevenLabsConversation(options: UseElevenLabsConversationOpti
             }
 
             const tokenData = await tokenRes.json();
+            console.log("[ElevenLabs] Token received, starting session...");
 
             // start session with WebRTC
             const convId = await conversation.startSession({
                 conversationToken: tokenData.token,
-                connectionType: "webrtc",
                 dynamicVariables: {
                     vendor_name: tokenData.context.vendorName,
                     vendor_context: tokenData.context.vendorContext,
@@ -123,6 +170,7 @@ export function useElevenLabsConversation(options: UseElevenLabsConversationOpti
                 },
             });
 
+            console.log("[ElevenLabs] Session started, conversation ID:", convId);
             setConversationId(convId);
             return convId;
         } catch (err) {
@@ -152,7 +200,6 @@ export function useElevenLabsConversation(options: UseElevenLabsConversationOpti
     const toggleMute = useCallback(() => {
         const newMuted = !isMuted;
         setIsMuted(newMuted);
-        // ElevenLabs handles audio internally via the conversation object
         if (newMuted) {
             conversation.setVolume({ volume: 0 });
         } else {

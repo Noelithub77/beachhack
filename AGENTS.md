@@ -36,15 +36,15 @@ COCO is a multi-tenant customer support platform built for hackathons. It enable
 
 ### User Roles
 
-| Role | Description | Access Level |
-| ---- | ----------- | ------------ |
-| customer | End users seeking support | Basic |
-| rep_l1 | Level 1 support reps | Standard |
-| rep_l2 | Level 2 support reps | Advanced |
-| rep_l3 | Level 3 senior reps | Senior |
-| admin_manager | Vendor managers | Admin |
-| admin_senior | Senior admins | Senior Admin |
-| admin_super | Super admins | Full Access |
+| Role          | Description               | Access Level |
+| ------------- | ------------------------- | ------------ |
+| customer      | End users seeking support | Basic        |
+| rep_l1        | Level 1 support reps      | Standard     |
+| rep_l2        | Level 2 support reps      | Advanced     |
+| rep_l3        | Level 3 senior reps       | Senior       |
+| admin_manager | Vendor managers           | Admin        |
+| admin_senior  | Senior admins             | Senior Admin |
+| admin_super   | Super admins              | Full Access  |
 
 ### Key Flows
 
@@ -508,6 +508,7 @@ NEXT_PUBLIC_CONVEX_URL=...
 CONVEX_DEPLOYMENT=...
 GOOGLE_GENERATIVE_AI_API_KEY=...
 ELEVENLABS_API_KEY=...
+NEXT_PUBLIC_ELEVENLABS_AGENT_ID=...  # Client-side for WebRTC calls
 TWILIO_ACCOUNT_SID=...
 TWILIO_AUTH_TOKEN=...
 RESEND_API_KEY=...
