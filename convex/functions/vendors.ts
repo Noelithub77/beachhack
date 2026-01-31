@@ -123,7 +123,7 @@ export const toggleFavorite = mutation({
     const existing = await ctx.db
       .query("userFavorites")
       .withIndex("by_user_vendor", (q) =>
-        q.eq("userId", args.userId).eq("vendorId", args.vendorId)
+        q.eq("userId", args.userId).eq("vendorId", args.vendorId),
       )
       .first();
 
@@ -181,7 +181,7 @@ export const getWithStats = query({
       const fav = await ctx.db
         .query("userFavorites")
         .withIndex("by_user_vendor", (q) =>
-          q.eq("userId", args.userId).eq("vendorId", args.vendorId)
+          q.eq("userId", args.userId).eq("vendorId", args.vendorId),
         )
         .first();
       isFavorite = !!fav;
@@ -193,7 +193,7 @@ export const getWithStats = query({
       stats: {
         totalTickets: userTickets.length,
         openTickets: userTickets.filter(
-          (t) => !["closed", "resolved"].includes(t.status)
+          (t) => !["closed", "resolved"].includes(t.status),
         ).length,
         resolvedTickets: userTickets.filter((t) => t.status === "resolved")
           .length,

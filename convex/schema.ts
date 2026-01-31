@@ -92,6 +92,15 @@ export default defineSchema({
     channel: channel,
     priority: priority,
     subject: v.string(),
+    // Intake form fields
+    description: v.optional(v.string()),
+    category: v.optional(v.string()), // e.g., "billing", "technical", "account", "general"
+    severity: v.optional(v.string()), // e.g., "minor", "moderate", "major", "critical"
+    urgency: v.optional(v.string()), // e.g., "low", "medium", "high", "immediate"
+    preferredContact: v.optional(v.string()), // e.g., "email", "chat", "call"
+    // AI summary
+    aiSummary: v.optional(v.string()),
+    // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
     resolvedAt: v.optional(v.number()),

@@ -61,7 +61,7 @@ export default function VendorDetailPage() {
           vendorId: vendorId as Id<"vendors">,
           userId: user.id as Id<"users">,
         }
-      : { vendorId: vendorId as Id<"vendors"> }
+      : { vendorId: vendorId as Id<"vendors"> },
   );
 
   // Fetch user's tickets for this vendor
@@ -72,7 +72,7 @@ export default function VendorDetailPage() {
           vendorId: vendorId as Id<"vendors">,
           customerId: user.id as Id<"users">,
         }
-      : "skip"
+      : "skip",
   );
 
   // Toggle favorite
@@ -161,7 +161,7 @@ export default function VendorDetailPage() {
                       "h-5 w-5 transition-colors",
                       vendor.isFavorite
                         ? "fill-yellow-400 text-yellow-400"
-                        : "text-muted-foreground hover:text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   />
                 </button>
@@ -184,11 +184,15 @@ export default function VendorDetailPage() {
               <p className="text-xs text-muted-foreground">Total Tickets</p>
             </div>
             <div className="text-center px-4 py-2 rounded-lg bg-muted/50">
-              <p className="text-2xl font-bold text-primary">{vendor.stats.openTickets}</p>
+              <p className="text-2xl font-bold text-primary">
+                {vendor.stats.openTickets}
+              </p>
               <p className="text-xs text-muted-foreground">Open</p>
             </div>
             <div className="text-center px-4 py-2 rounded-lg bg-muted/50">
-              <p className="text-2xl font-bold text-green-600">{vendor.stats.resolvedTickets}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {vendor.stats.resolvedTickets}
+              </p>
               <p className="text-xs text-muted-foreground">Resolved</p>
             </div>
           </div>
@@ -382,30 +386,37 @@ export default function VendorDetailPage() {
                 <div className="relative">
                   {/* Timeline line */}
                   <div className="absolute left-3 top-2 bottom-2 w-px bg-border" />
-                  
+
                   <div className="space-y-6">
                     {tickets.slice(0, 10).map((ticket, index) => (
                       <div key={ticket._id} className="relative pl-8">
                         {/* Timeline dot */}
-                        <div className={cn(
-                          "absolute left-1.5 w-3 h-3 rounded-full border-2 bg-background",
-                          ticket.status === "resolved" || ticket.status === "closed"
-                            ? "border-green-500"
-                            : ticket.status === "in_progress" || ticket.status === "assigned"
-                            ? "border-primary"
-                            : "border-muted-foreground"
-                        )} />
-                        
+                        <div
+                          className={cn(
+                            "absolute left-1.5 w-3 h-3 rounded-full border-2 bg-background",
+                            ticket.status === "resolved" ||
+                              ticket.status === "closed"
+                              ? "border-green-500"
+                              : ticket.status === "in_progress" ||
+                                  ticket.status === "assigned"
+                                ? "border-primary"
+                                : "border-muted-foreground",
+                          )}
+                        />
+
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <p className="font-medium text-sm">{ticket.subject}</p>
+                            <p className="font-medium text-sm">
+                              {ticket.subject}
+                            </p>
                             <div className="flex items-center gap-2 mt-1">
                               <Badge variant="outline" className="text-xs">
                                 {ticket.channel}
                               </Badge>
                               <Badge
                                 variant={
-                                  ticket.status === "resolved" || ticket.status === "closed"
+                                  ticket.status === "resolved" ||
+                                  ticket.status === "closed"
                                     ? "default"
                                     : "secondary"
                                 }
@@ -416,7 +427,9 @@ export default function VendorDetailPage() {
                             </div>
                           </div>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(ticket.createdAt), {
+                              addSuffix: true,
+                            })}
                           </span>
                         </div>
                       </div>
@@ -467,7 +480,9 @@ export default function VendorDetailPage() {
                 </div>
                 {vendor.description && (
                   <div className="pt-2 border-t">
-                    <span className="text-muted-foreground text-sm">Description</span>
+                    <span className="text-muted-foreground text-sm">
+                      Description
+                    </span>
                     <p className="mt-1 text-sm">{vendor.description}</p>
                   </div>
                 )}
@@ -517,11 +532,13 @@ export default function VendorDetailPage() {
                     </a>
                   </div>
                 ) : null}
-                {!vendor.supportEmail && !vendor.supportPhone && !vendor.website && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No contact information available
-                  </p>
-                )}
+                {!vendor.supportEmail &&
+                  !vendor.supportPhone &&
+                  !vendor.website && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No contact information available
+                    </p>
+                  )}
               </CardContent>
             </Card>
 
@@ -536,31 +553,47 @@ export default function VendorDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {vendor.slaResponseHours || vendor.contractStartDate || vendor.contractEndDate ? (
+                {vendor.slaResponseHours ||
+                vendor.contractStartDate ||
+                vendor.contractEndDate ? (
                   <div className="grid gap-4 sm:grid-cols-3">
                     {vendor.slaResponseHours && (
                       <div className="rounded-lg border p-4 text-center">
                         <Clock className="h-5 w-5 mx-auto mb-2 text-primary" />
-                        <p className="text-2xl font-bold">{vendor.slaResponseHours}h</p>
-                        <p className="text-xs text-muted-foreground">Response Time</p>
+                        <p className="text-2xl font-bold">
+                          {vendor.slaResponseHours}h
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Response Time
+                        </p>
                       </div>
                     )}
                     {vendor.contractStartDate && (
                       <div className="rounded-lg border p-4 text-center">
                         <Calendar className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
                         <p className="font-medium">
-                          {format(new Date(vendor.contractStartDate), "MMM d, yyyy")}
+                          {format(
+                            new Date(vendor.contractStartDate),
+                            "MMM d, yyyy",
+                          )}
                         </p>
-                        <p className="text-xs text-muted-foreground">Contract Start</p>
+                        <p className="text-xs text-muted-foreground">
+                          Contract Start
+                        </p>
                       </div>
                     )}
                     {vendor.contractEndDate && (
                       <div className="rounded-lg border p-4 text-center">
                         <Calendar className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
                         <p className="font-medium">
-                          {format(new Date(vendor.contractEndDate), "MMM d, yyyy")}
+                          {format(
+                            new Date(vendor.contractEndDate),
+                            "MMM d, yyyy",
+                          )}
                         </p>
-                        <p className="text-xs text-muted-foreground">Contract End</p>
+                        <p className="text-xs text-muted-foreground">
+                          Contract End
+                        </p>
                       </div>
                     )}
                   </div>

@@ -32,6 +32,12 @@ export const create = mutation({
       v.literal("urgent"),
     ),
     subject: v.string(),
+    // Optional intake form fields
+    description: v.optional(v.string()),
+    category: v.optional(v.string()),
+    severity: v.optional(v.string()),
+    urgency: v.optional(v.string()),
+    preferredContact: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -42,6 +48,84 @@ export const create = mutation({
       updatedAt: now,
     });
     return { success: true, ticketId: id };
+  },
+});
+
+// create ticket from intake form with auto-routing
+export const createFromIntake = mutation({
+  args: {
+    customerId: v.id("users"),
+    vendorId: v.id("vendors"),
+    subject: v.string(),
+    description: v.string(),
+    category: v.string(),
+    severity: v.string(),
+    urgency: v.string(),
+    preferredContact: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Determine priority based on severity + urgency
+    let priority: "low" | "medium" | "high" | "urgent" = "medium";
+    if (args.severity === "critical" || args.urgency === "immediate") {
+      priority = "urgent";
+    } else if (args.severity === "major" || args.urgency === "high") {
+      priority = "high";
+    } else if (args.severity === "minor" && args.urgency === "low") {
+      priority = "low";
+    }
+
+    // Map preferred contact to channel
+    const channelMap: Record<string, "chat" | "call" | "email"> = {
+      chat: "chat",
+      call: "call",
+      email: "email",
+    };
+    const channel = channelMap[args.preferredContact] || "chat";
+
+    // Create the ticket
+    const ticketId = await ctx.db.insert("tickets", {
+      customerId: args.customerId,
+      vendorId: args.vendorId,
+      status: "waiting_for_agent",
+      channel,
+      priority,
+      subject: args.subject,
+      description: args.description,
+      category: args.category,
+      severity: args.severity,
+      urgency: args.urgency,
+      preferredContact: args.preferredContact,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Create initial conversation
+    const conversationId = await ctx.db.insert("conversations", {
+      ticketId,
+      channel,
+      createdAt: now,
+    });
+
+    // Add the initial message from customer
+    await ctx.db.insert("messages", {
+      conversationId,
+      senderId: args.customerId,
+      senderType: "customer",
+      content: args.description,
+      createdAt: now,
+    });
+
+    // Add to queue for routing
+    await ctx.db.insert("queues", {
+      vendorId: args.vendorId,
+      ticketId,
+      priority: priority === "urgent" ? 4 : priority === "high" ? 3 : priority === "medium" ? 2 : 1,
+      enteredAt: now,
+    });
+
+    return { success: true, ticketId };
   },
 });
 

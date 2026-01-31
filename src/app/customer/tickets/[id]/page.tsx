@@ -6,7 +6,20 @@ import { Id } from "../../../../../convex/_generated/dataModel";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, MessageCircle, Clock, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowLeft,
+  Loader2,
+  MessageCircle,
+  Clock,
+  User,
+  Building2,
+  Tag,
+  AlertCircle,
+  Zap,
+  Phone,
+  Mail,
+} from "lucide-react";
 import Link from "next/link";
 import {
   TicketStatusBadge,
@@ -126,11 +139,69 @@ export default function TicketDetailPage() {
             )}
             {ticket.vendor && (
               <div className="flex items-center gap-1.5">
-                <MessageCircle className="h-4 w-4" />
+                <Building2 className="h-4 w-4" />
                 {ticket.vendor.name}
               </div>
             )}
           </div>
+
+          {/* Intake Details if available */}
+          {(ticket.category || ticket.severity || ticket.description) && (
+            <div className="mt-4 pt-4 border-t space-y-3">
+              {ticket.description && (
+                <div>
+                  <p className="text-sm font-medium mb-1">Description</p>
+                  <p className="text-sm text-muted-foreground">{ticket.description}</p>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {ticket.category && (
+                  <Badge variant="outline" className="gap-1">
+                    <Tag className="h-3 w-3" />
+                    {ticket.category}
+                  </Badge>
+                )}
+                {ticket.severity && (
+                  <Badge
+                    variant="outline"
+                    className={`gap-1 ${
+                      ticket.severity === "critical"
+                        ? "border-red-500 text-red-500"
+                        : ticket.severity === "major"
+                        ? "border-orange-500 text-orange-500"
+                        : ""
+                    }`}
+                  >
+                    <AlertCircle className="h-3 w-3" />
+                    {ticket.severity}
+                  </Badge>
+                )}
+                {ticket.urgency && (
+                  <Badge
+                    variant="outline"
+                    className={`gap-1 ${
+                      ticket.urgency === "immediate"
+                        ? "border-red-500 text-red-500"
+                        : ticket.urgency === "high"
+                        ? "border-orange-500 text-orange-500"
+                        : ""
+                    }`}
+                  >
+                    <Zap className="h-3 w-3" />
+                    {ticket.urgency} urgency
+                  </Badge>
+                )}
+                {ticket.preferredContact && (
+                  <Badge variant="secondary" className="gap-1">
+                    {ticket.preferredContact === "call" && <Phone className="h-3 w-3" />}
+                    {ticket.preferredContact === "email" && <Mail className="h-3 w-3" />}
+                    {ticket.preferredContact === "chat" && <MessageCircle className="h-3 w-3" />}
+                    Prefers {ticket.preferredContact}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

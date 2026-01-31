@@ -51,11 +51,11 @@ export default function CustomerVendors() {
   // Fetch vendors with favorites if user is logged in
   const vendorsWithFavorites = useQuery(
     api.functions.vendors.listWithFavorites,
-    user?.id ? { userId: user.id as Id<"users"> } : "skip"
+    user?.id ? { userId: user.id as Id<"users"> } : "skip",
   );
   const vendorsBasic = useQuery(
     api.functions.vendors.list,
-    user?.id ? "skip" : {}
+    user?.id ? "skip" : {},
   );
   const vendors = vendorsWithFavorites ?? vendorsBasic;
 
@@ -75,16 +75,18 @@ export default function CustomerVendors() {
 
     // Filter by search query
     if (searchQuery) {
-      result = result.filter((vendor) =>
-        vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        vendor.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      result = result.filter(
+        (vendor) =>
+          vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          vendor.category?.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
     // Filter by categories
     if (selectedCategories.length > 0) {
-      result = result.filter((vendor) =>
-        vendor.category && selectedCategories.includes(vendor.category)
+      result = result.filter(
+        (vendor) =>
+          vendor.category && selectedCategories.includes(vendor.category),
       );
     }
 
@@ -118,7 +120,10 @@ export default function CustomerVendors() {
     }
   };
 
-  const handleToggleFavorite = async (e: React.MouseEvent, vendorId: string) => {
+  const handleToggleFavorite = async (
+    e: React.MouseEvent,
+    vendorId: string,
+  ) => {
     e.stopPropagation();
     if (!user?.id) return;
     await toggleFavorite({
@@ -131,7 +136,7 @@ export default function CustomerVendors() {
     setSelectedCategories((prev) =>
       prev.includes(category)
         ? prev.filter((c) => c !== category)
-        : [...prev, category]
+        : [...prev, category],
     );
   };
 
@@ -163,7 +168,8 @@ export default function CustomerVendors() {
   };
 
   const modeInfo = getModeInfo();
-  const hasActiveFilters = searchQuery || selectedCategories.length > 0 || sortBy !== "alphabetical";
+  const hasActiveFilters =
+    searchQuery || selectedCategories.length > 0 || sortBy !== "alphabetical";
 
   if (vendors === undefined) {
     return (
@@ -229,7 +235,11 @@ export default function CustomerVendors() {
             {categories && categories.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 shrink-0"
+                  >
                     <Tag className="h-4 w-4" />
                     Category
                     {selectedCategories.length > 0 && (
@@ -339,7 +349,8 @@ export default function CustomerVendors() {
 
       {/* Results count */}
       <div className="text-sm text-muted-foreground">
-        {filteredVendors.length} vendor{filteredVendors.length !== 1 ? "s" : ""} found
+        {filteredVendors.length} vendor{filteredVendors.length !== 1 ? "s" : ""}{" "}
+        found
       </div>
 
       {/* Vendor List/Grid */}
@@ -388,7 +399,7 @@ export default function CustomerVendors() {
                         "h-4 w-4 transition-colors",
                         isFavorite
                           ? "fill-yellow-400 text-yellow-400"
-                          : "text-muted-foreground group-hover:text-foreground"
+                          : "text-muted-foreground group-hover:text-foreground",
                       )}
                     />
                   </button>
@@ -462,7 +473,7 @@ export default function CustomerVendors() {
                             "h-4 w-4",
                             isFavorite
                               ? "fill-yellow-400 text-yellow-400"
-                              : "text-muted-foreground"
+                              : "text-muted-foreground",
                           )}
                         />
                       </button>
