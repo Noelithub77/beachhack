@@ -9,19 +9,8 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as functions_analytics from "../functions/analytics.js";
-import type * as functions_manage_cleanup_images from "../functions/manage/cleanup_images.js";
 import type * as functions_manage_reset from "../functions/manage/reset.js";
 import type * as functions_manage_restraunts_foodstory from "../functions/manage/restraunts/foodstory.js";
-import type * as functions_manage_seed from "../functions/manage/seed.js";
-import type * as functions_menu from "../functions/menu.js";
-import type * as functions_orders from "../functions/orders.js";
-import type * as functions_pages from "../functions/pages.js";
-import type * as functions_permissions from "../functions/permissions.js";
-import type * as functions_restaurants from "../functions/restaurants.js";
-import type * as functions_staff from "../functions/staff.js";
-import type * as functions_storage from "../functions/storage.js";
-import type * as functions_tables from "../functions/tables.js";
 import type * as http from "../http.js";
 
 import type {
@@ -32,19 +21,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  "functions/analytics": typeof functions_analytics;
-  "functions/manage/cleanup_images": typeof functions_manage_cleanup_images;
   "functions/manage/reset": typeof functions_manage_reset;
   "functions/manage/restraunts/foodstory": typeof functions_manage_restraunts_foodstory;
-  "functions/manage/seed": typeof functions_manage_seed;
-  "functions/menu": typeof functions_menu;
-  "functions/orders": typeof functions_orders;
-  "functions/pages": typeof functions_pages;
-  "functions/permissions": typeof functions_permissions;
-  "functions/restaurants": typeof functions_restaurants;
-  "functions/staff": typeof functions_staff;
-  "functions/storage": typeof functions_storage;
-  "functions/tables": typeof functions_tables;
   http: typeof http;
 }>;
 
