@@ -9,8 +9,22 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as functions_analytics from "../functions/analytics.js";
+import type * as functions_auth from "../functions/auth.js";
+import type * as functions_calendar from "../functions/calendar.js";
+import type * as functions_calls from "../functions/calls.js";
+import type * as functions_context from "../functions/context.js";
+import type * as functions_conversations from "../functions/conversations.js";
+import type * as functions_feedback from "../functions/feedback.js";
 import type * as functions_manage_reset from "../functions/manage/reset.js";
-import type * as functions_manage_restraunts_foodstory from "../functions/manage/restraunts/foodstory.js";
+import type * as functions_manage_seed from "../functions/manage/seed.js";
+import type * as functions_messages from "../functions/messages.js";
+import type * as functions_queues from "../functions/queues.js";
+import type * as functions_tasks from "../functions/tasks.js";
+import type * as functions_tickets from "../functions/tickets.js";
+import type * as functions_transcripts from "../functions/transcripts.js";
+import type * as functions_users from "../functions/users.js";
+import type * as functions_vendors from "../functions/vendors.js";
 import type * as http from "../http.js";
 
 import type {
@@ -21,8 +35,22 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  "functions/analytics": typeof functions_analytics;
+  "functions/auth": typeof functions_auth;
+  "functions/calendar": typeof functions_calendar;
+  "functions/calls": typeof functions_calls;
+  "functions/context": typeof functions_context;
+  "functions/conversations": typeof functions_conversations;
+  "functions/feedback": typeof functions_feedback;
   "functions/manage/reset": typeof functions_manage_reset;
-  "functions/manage/restraunts/foodstory": typeof functions_manage_restraunts_foodstory;
+  "functions/manage/seed": typeof functions_manage_seed;
+  "functions/messages": typeof functions_messages;
+  "functions/queues": typeof functions_queues;
+  "functions/tasks": typeof functions_tasks;
+  "functions/tickets": typeof functions_tickets;
+  "functions/transcripts": typeof functions_transcripts;
+  "functions/users": typeof functions_users;
+  "functions/vendors": typeof functions_vendors;
   http: typeof http;
 }>;
 
